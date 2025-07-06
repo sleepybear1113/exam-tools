@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>答题卡装箱单生成工具</title>
+    <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+<div class="main-container">
+    <div class="input-container">
+        <div class="html-title">
+            答题卡装箱单生成工具
+        </div>
+        <div>
+            <label for="region">地区：</label>
+            <input type="text" class="input-field-region" id="region" value="嘉兴市/市本级">
+        </div>
+        <div class="radio-group">
+            <label>单页重复显示：</label>
+            <label>
+                <input type="radio" name="duplicate" value="0" checked> 否
+            </label>
+            <label>
+                <input type="radio" name="duplicate" value="1"> 是
+            </label>
+            <span>(即A4纸上下半页是否重复相同)</span>
+        </div>
+        <div class="subject-count-row">
+            <label for="subjectCount">科目数量：</label>
+            <select id="subjectCount" class="input-field">
+                <!-- 1-20的选项将由JavaScript生成 -->
+            </select>
+        </div>
+        <div class="subject-inputs-container">
+            <div id="subjectInputs">
+                <!-- 所有20个输入框将在页面加载时生成 -->
+            </div>
+        </div>
+        <div class="button-group">
+            <button onclick="toggleManualInput()" id="toggleBtn">手动输入</button>
+            <button onclick="generateLabels()">生成标签</button>
+        </div>
+        <div class="manual-input-area" id="manualInputArea">
+            <label for="subjectData"></label>
+            <textarea id="subjectData"></textarea>
+            <div>
+                <button onclick="fillSampleData()">样例填充</button>
+                <button onclick="parseSubjectData()">识别</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="print-section">
+        <button onclick="window.print()">打印</button>
+    </div>
+</div>
+
+<div class="print-area page-counter" id="printArea" contenteditable="true">
+    <!-- 这里的内容会由 JavaScript 动态生成 -->
+</div>
+
+<script src="index.js"></script>
+</body>
+</html>

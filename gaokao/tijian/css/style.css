@@ -1,0 +1,62 @@
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    color: #0d6efd;
+    border: 1px solid #dee2e6;
+}
+
+.table td {
+    border: 1px solid #dee2e6;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.table-hover > tbody > tr:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.pagination-container {
+    display: flex;
+    align-items: center;
+}
+
+.pagination {
+    margin-bottom: 0;
+}
+
+.page-link {
+    color: #0d6efd;
+}
+
+.page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+}
+
+.input-group-sm .form-control {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.input-group-sm .input-group-text {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-select-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+} 

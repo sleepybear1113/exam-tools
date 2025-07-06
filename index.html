@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考试工具合集导航</title>
+    <link rel="stylesheet" href="./lib/bootstrap.5.3.5.min.css">
+    <script src="./lib/bootstrap.5.3.5.bundle.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #ffffff 0%, #c3c8ef 100%);
+            min-height: 100vh;
+            padding: 10px 0;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+            border: none;
+            overflow: hidden;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 确保链接样式正确 */
+        a:hover .tool-card {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 移除链接的默认样式 */
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .tool-card .card-body {
+            padding: 1.5rem;
+        }
+
+        .tool-card .card-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .tool-card .card-text {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            line-height: 1.25;
+        }
+
+        .tool-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            color: black;
+            font-size: 1.5rem;
+        }
+
+        .page-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            color: black;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: black;
+            font-size: 1.1rem;
+            margin-bottom: 0;
+        }
+
+        /* 分类标签样式 */
+        .category-tag {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: black;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .category-tag.exam-affairs {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+
+        .category-tag.self-exam {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+        }
+
+        .category-tag.converter {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+        }
+
+        .category-heading {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: black;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.05em;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border-left: 8px solid #667eea;
+            padding-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar navbar-expand-lg" style="background: rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px);">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            考试考务工具合集
+        </a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <!-- 页面标题 -->
+    <div class="page-header">
+        <h1>📚 考试考务工具合集</h1>
+        <p>提供各种实用的考试考务辅助工具，提升工作效率</p>
+    </div>
+
+    <!-- 工具网格 -->
+    <div class="tools-section">
+        <!-- 考务工具 -->
+        <h2 class="category-heading">通用考务工具</h2>
+        <div class="row g-4 mb-5">
+            <div class="col-lg-4 col-md-6 col-sm-12 tool-item">
+                <a href="./common/exam-box-print/index.html" target="_blank" class="text-decoration-none">
+                    <div class="card tool-card">
+                        <div class="card-body text-center">
+                            <div class="tool-icon mx-auto">📦</div>
+                            <h5 class="card-title">答题卡装箱打印工具</h5>
+                            <p class="card-text">
+                                可以根据地区、科目、箱数、袋数等信息生成标准化的装箱A4纸标签，方便张贴至回卷箱，进行信息的展示。</p>
+                            <small class="text-muted">点击进入工具 →</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-lg-4 col-md-6 col-sm-12 tool-item">
+                <a href="./common/watermark/index.html" target="_blank" class="text-decoration-none">
+                    <div class="card tool-card">
+                        <div class="card-body text-center">
+                            <div class="tool-icon mx-auto">📝</div>
+                            <h5 class="card-title">水印打印工具</h5>
+                            <p class="card-text">
+                                可以批量给文档的不同页面打印上不同的水印。
+                            </p>
+                            <small class="text-muted">点击进入工具 →</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 高考工具 -->
+        <h2 class="category-heading">高考工具</h2>
+        <div class="row g-4 mb-5">
+            <div class="col-lg-4 col-md-6 col-sm-12 tool-item">
+                <a href="./gaokao/tijian/index.html" target="_blank" class="text-decoration-none">
+                    <div class="card tool-card">
+                        <div class="card-body text-center">
+                            <div class="tool-icon mx-auto">📋</div>
+                            <h5 class="card-title">高考体检数据校验</h5>
+                            <p class="card-text">
+                                可以解析体检的DBF文件，校验其中体检的数据是否有冲突、异常，并形成导出数据可以核对。</p>
+                            <small class="text-muted">点击进入工具 →</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 自考工具 -->
+        <h2 class="category-heading">自学考试工具</h2>
+        <div class="row g-4 mb-5">
+            <div class="col-lg-4 col-md-6 col-sm-12 tool-item">
+                <a href="#" onclick="alert('功能开发中...'); return false;" class="text-decoration-none">
+                    <div class="card tool-card">
+                        <div class="card-body text-center">
+                            <div class="tool-icon mx-auto">📋</div>
+                            <h5 class="card-title">自考报名助手</h5>
+                            <p class="card-text">
+                                自考报名流程指导，提供报名时间提醒、材料准备清单等功能。帮助考生顺利完成自考报名。</p>
+                            <small class="text-muted">功能开发中...</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 转换工具 -->
+        <h2 class="category-heading">转换工具</h2>
+        <div class="row g-4 mb-5">
+            <div class="col-lg-4 col-md-6 col-sm-12 tool-item">
+                <a href="#" onclick="alert('功能开发中...'); return false;" class="text-decoration-none">
+                    <div class="card tool-card">
+                        <div class="card-body text-center">
+                            <div class="tool-icon mx-auto">🔄</div>
+                            <h5 class="card-title">文件格式转换</h5>
+                            <p class="card-text">
+                                支持多种文件格式转换，包括PDF、Word、Excel等。批量转换功能，提高工作效率。</p>
+                            <small class="text-muted">功能开发中...</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="text-center mt-5">
+        <p class="text-black-50">© 2025 考试考务工具合集 - sleepystar@jxksy</p>
+    </footer>
+</div>
+</body>
+</html>
