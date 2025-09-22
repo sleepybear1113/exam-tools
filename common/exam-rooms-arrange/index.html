@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>嘉兴市考试试场编排系统</title>
+    <link href="../../lib/bootstrap/5.3.8/bootstrap.min.css" rel="stylesheet">
+    <script src="../../lib/bootstrap/5.3.8/bootstrap.bundle.min.js"></script>
+    <script src="../../lib/vue/3.5.20/vue.global.prod.js"></script>
+    <script src="../../lib/sheetjs/0.20.3/xlsx.mini.min.js"></script>
+
+    <script type="module" src="./js/excel-utils.js"></script>
+    <script src="./js/classes.js"></script>
+
+    <link href="./css/css.css" rel="stylesheet">
+</head>
+<body>
+
+<h2 class="app-title no-print-element">考试试场编排系统</h2>
+
+<div id="exam-rooms-arrange" style="padding: 5px">
+    <div class="no-print">
+        <div id="left">
+            <div>
+                <button id="uploadBtn" @click="selectFile">选择编排的Excel文件</button>
+                <input type="file" id="fileSelect" ref="fileSelect" @change="handleFileChange" accept=".xlsx"
+                       style="display:none"/>
+
+                <span v-if="fileName">已选择文件: {{ fileName }}</span>
+            </div>
+
+            <div id="select-pic-folder">
+                <button @click="selectPicFolder">选择照片文件夹</button>
+                <input type="file" id="picFolderSelect" ref="picFolderSelect" @change="handlePicFolderChange"
+                       webkitdirectory directory multiple accept="image/*" style="display:none"/>
+
+                <span v-if="picFolderName" style="margin-top: 10px;">
+                    <a>已选择文件夹: {{ picFolderName }}</a>
+                    <a>照片数量: {{ picFileList.length }}</a>
+                </span>
+            </div>
+
+            <div>
+                <button @click="arrangeStuIntoRooms(false)">安排试场(顺序)</button>
+                <button @click="arrangeStuIntoRooms(true)">安排试场(随机)</button>
+            </div>
+
+            <div>
+                <button @click="switchTab('核对单')">核对单</button>
+                <button @click="switchTab('准考证')">准考证</button>
+                <button @click="switchTab('桌贴')">桌贴</button>
+            </div>
+            <div>
+                <button id="printBtn" onclick="window.print()">打印当前页</button>
+                <a href="files/考生信息Excel模板.xlsx" download>
+                    <button id="download-template">下载编排Excel导入模板</button>
+                </a>
+                <a href="files/考生信息Excel导入样例-随机数据填充.xlsx" download>
+                    <button id="template-sample">下载Excel导入样例-随机数据填充</button>
+                </a>
+            </div>
+        </div>
+
+        <div id="right">
+            <h4>
+                <label for="logs">系统日志</label>
+            </h4>
+            <textarea id="logs" v-model="messagesText" ref="logTextarea" readonly
+                      style="width: 100%; resize: vertical; font-family: monospace; font-size: 12px;"></textarea>
+        </div>
+    </div>
+
+    <!--A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm-->
+    <div class="main a4-paper" v-if="arrangedRooms.length > 0">
+        <div v-if="tab === '核对单'">
+            <div class="no-print">
+                <h3 class="middle">核对单</h3>
+                <button @click="switchPicShown(true)">带照片</button>
+                <button @click="switchPicShown(false)">不带照片</button>
+            </div>
+
+            <div v-for="(room, index) in arrangedRooms" :key="room.id">
+                <div class="middle hdd-header">
+                    <h4 class="middle" style="text-align: center">{{examName}}</h4>
+                    <h5 class="hdd-header-line1">
+                        <span class="hdd-left">{{ room.schoolName }}</span>
+                        <span class="hdd-center">{{ room.typeName}}({{ room.typeId }}) {{ room.name }}</span>
+                        <span class="hdd-right">{{ room.students.length }}人</span>
+                    </h5>
+                    <h5 class="hdd-header-line2">
+                        <span class="hdd-left">考试时间：{{ room.time }}</span>
+                        <span class="hdd-right">监考教师：____________________</span>
+                    </h5>
+                </div>
+                <table v-if="picShown" class="hdd-table">
+                    <tr v-for="(row, rowIndex) in chunkStudents(room)" :key="rowIndex" class="room-row">
+                        <td v-for="student in row" :key="student.ksh" class="student-cell">
+                            <div class="student-info">
+                                <div v-if="picShown" class="photo-container">
+                                    <img :src="student.photo || emptyPng" alt="照片" class="photo">
+                                </div>
+                                <div class="info-text">
+                                    <p>{{ student.idCard }}</p>
+                                    <p>{{ student.ksh }}</p>
+                                    <p>座位号: {{ student.seatNo }}</p>
+                                    <p>{{ student.name }}</p>
+                                    <p>签名</p>
+                                </div>
+                            </div>
+                        </td>
+                        <template v-if="row.length < 5">
+                            <td v-for="n in (5 - row.length)" :key="`empty-${rowIndex}-${n}`" class="student-cell"></td>
+                        </template>
+                    </tr>
+                </table>
+
+                <table v-if="!picShown" class="checklist-table">
+                    <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>身份证号</th>
+                        <th>准考证号</th>
+                        <th>座位号</th>
+                        <th>姓名</th>
+                        <th>考生签名</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="(student, index) in room.students" :key="student.ksh">
+                        <td>{{ index + 1 }}</td>
+                        <td>{{ student.idCard }}</td>
+                        <td>{{ student.ksh }}</td>
+                        <td>{{ student.seatNo }}</td>
+                        <td>{{ student.name }}</td>
+                        <td class="signature-cell"></td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <hr class="no-print-element">
+                <div style="page-break-after:always;" v-if="index < arrangedRooms.length - 1"></div>
+            </div>
+        </div>
+
+        <div v-if="tab === '准考证'">
+            <div class="no-print">
+                <h4 class="middle">准考证</h4>
+                <div>
+                    <button @click="switchPicShown(true)">带照片</button>
+                    <button @click="switchPicShown(false)">不带照片</button>
+                </div>
+                <div class="sorting-options">
+                    <div style="margin-bottom: 10px;">
+                        <label for="primarySortKey">排序方式(首要)：</label>
+                        <select v-model="admissionTicketSortKey" id="primarySortKey">
+                            <option value="className">班级</option>
+                            <option value="ksh">考生号</option>
+                            <option value="name">姓名</option>
+                            <option value="idCard">身份证号</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label for="secondarySortKey">排序方式(次要)：</label>
+                        <select v-model="admissionTicketSecondarySortKey" id="secondarySortKey">
+                            <option value="">无</option>
+                            <option value="className">班级</option>
+                            <option value="ksh">考生号</option>
+                            <option value="name">姓名</option>
+                            <option value="idCard">身份证号</option>
+                        </select>
+                    </div>
+
+                    <div style="text-align: center;">
+                        <button @click="resetAdmissionTicketSort"
+                                style="background: linear-gradient(145deg, #f093fb 0%, #f5576c 100%);">重置排序
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 准考证内容 -->
+            <div v-for="sameStudentGroup in sortedSameStudentGroupList" :key="`ticket-${sameStudentGroup.ksh}`"
+                 :class="['ticket-container', picShown ? 'with-photo' : 'no-photo']">
+                <!-- 准考证标题 -->
+                <div class="ticket-header">
+                    <h3 class="ticket-title" style="text-align: center">{{examName}}</h3>
+                    <h3 class="ticket-title">考试准考证</h3>
+                </div>
+
+                <!-- 照片和个人信息区域 -->
+                <div class="ticket-top-section">
+
+                    <!-- 个人信息 -->
+                    <div class="ticket-personal-info">
+                        <div class="personal-info-item">
+                            <span class="personal-label">考生姓名：</span>
+                            <span class="personal-value">{{ sameStudentGroup.name }}</span>
+                        </div>
+                        <div class="personal-info-item">
+                            <span class="personal-label">考生班级：</span>
+                            <span class="personal-value">{{ sameStudentGroup.className }}</span>
+                        </div>
+                        <div class="personal-info-item">
+                            <span class="personal-label">考生号：</span>
+                            <span class="personal-value">{{ sameStudentGroup.ksh }}</span>
+                        </div>
+                        <div class="personal-info-item">
+                            <span class="personal-label">身份证号：</span>
+                            <span class="personal-value">{{ sameStudentGroup.idCard }}</span>
+                        </div>
+                    </div>
+
+                    <!-- 照片区域（可选） -->
+                    <div v-if="picShown" class="ticket-photo-container">
+                        <img :src="sameStudentGroup.students[0]?.photo || emptyPng" alt="考生照片" class="ticket-photo">
+                    </div>
+                </div>
+
+                <!-- 考试信息表格 -->
+                <div v-for="(room, index) in sameStudentGroup.rooms">
+                    <table class="ticket-exam-table">
+                        <tbody>
+                        <tr>
+                            <td class="exam-label">考点：</td>
+                            <td colspan="3" class="exam-value">{{ room.schoolName }}</td>
+                        </tr>
+                        <tr>
+                            <td class="exam-label">考试科目：</td>
+                            <td class="exam-value">{{ room.typeName }}</td>
+                            <td class="exam-label">考试时间：</td>
+                            <td class="exam-value">{{ room.time || '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="exam-label">考场号：</td>
+                            <td class="exam-value">{{ room.name }}</td>
+                            <td class="exam-label">座位号：</td>
+                            <td class="exam-value">{{ sameStudentGroup.students[index].seatNo }}</td>
+                        </tr>
+                        <tr v-if="room.remark">
+                            <td class="exam-label">备注：</td>
+                            <td colspan="3" class="exam-value">{{ room.remark }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 考生必读 -->
+                <div v-if="examNotice" class="ticket-notice">
+                    <h4 class="notice-title">考生必读</h4>
+                    <div class="notice-content" v-html="examNotice.replace(/\n/g, '<br>')"></div>
+                </div>
+
+                <!-- 分页符 -->
+                <div style="page-break-after: always;"></div>
+            </div>
+
+        </div>
+
+        <div v-if="tab === '桌贴'">
+            <div class="no-print">
+                <h3 class="middle">桌贴</h3>
+            </div>
+
+            <!-- 桌贴内容 -->
+            <div v-for="page in deskLabelPages" :key="`desk-${page.room.id}-${page.pageIndex}`"
+                 class="desk-label-page">
+
+                <!-- 考场信息标题 -->
+                <div class="desk-room-header">
+                    <p class="desk-room-subtitle">
+                        {{ page.room.schoolName }} [{{ page.room.typeName }}({{ page.room.typeId }})]
+                        {{ page.room.name }}
+                        共 {{ page.room.students.length }} 人
+                        <span v-if="page.totalPages > 1">
+                            | 第 {{ page.pageIndex + 1 }}/{{ page.totalPages }} 页
+                        </span>
+                    </p>
+                </div>
+
+                <!-- 页码提示（仅多页时显示） -->
+                <div v-if="page.totalPages > 1" class="desk-page-info">
+                    第 {{ page.pageIndex + 1 }} 页 / 共 {{ page.totalPages }} 页
+                    ({{ page.startIndex + 1 }}-{{ page.endIndex }} / {{ page.room.students.length }})
+                </div>
+
+                <hr>
+
+                <!-- 桌贴列表 -->
+                <div class="desk-labels-container">
+                    <div v-for="student in page.students" :key="student.ksh" class="desk-label-item">
+                        <!-- 左侧信息 -->
+                        <div class="desk-label-left">
+                            <div class="desk-label-info-item">
+                                <div class="desk-label-info-label">姓名</div>
+                                <div class="desk-label-info-value">{{ student.name }}</div>
+                            </div>
+                            <div class="desk-label-info-item">
+                                <div class="desk-label-info-value">考生号{{ student.ksh }}</div>
+                                <div class="desk-label-info-value">身份证{{ student.idCard }}</div>
+                            </div>
+                            <div class="desk-label-info-item">
+                                <div class="desk-label-info-value">{{ page.room.typeName }}</div>
+                                <div class="desk-label-info-value">{{ page.room.time }}</div>
+                            </div>
+                            <div class="desk-label-info-item">
+                                <div class="desk-label-info-label">考场号</div>
+                                <div class="desk-label-info-value">{{ page.room.name }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 右侧座位信息 -->
+                        <div class="desk-label-right">
+                            <div class="desk-label-room">
+                                <span class="desk-label-seat-label">座位号&nbsp;&nbsp;</span>
+                                <span class="desk-label-seat">{{ student.seatNo }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="./js/app.js"></script>
+
+</body>
+</html>

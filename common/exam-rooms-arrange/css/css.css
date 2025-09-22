@@ -1,0 +1,691 @@
+@media print {
+    .no-print {
+        display: none;
+    }
+
+    .no-print-element {
+        display: none;
+    }
+}
+
+.app-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 20px 0;
+    color: #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.middle {
+    margin: auto;
+
+}
+
+/**
+A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
+ */
+.a4-paper {
+    width: 210mm;
+    min-height: 297mm;
+    /*padding: 25mm 10mm 15mm 10mm;*/
+    margin: auto;
+}
+
+/**
+    * 学生信息，table中div横向并排排列，没有边框和间距，覆盖bootstrap的样式
+ */
+.student-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 1px;
+    border: gray solid 1px;
+    padding: 5px;
+}
+
+.info-text p {
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+}
+
+/* 每行 5 个单元格，等宽排列 */
+.student-cell {
+    width: 20%;
+    vertical-align: top;
+    padding: 1px;
+    box-sizing: border-box;
+}
+
+/* 照片容器与图片统一尺寸，保证占位图与真实照片一致 */
+.photo-container {
+    width: 80px;
+    height: 105px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+    border: #d6d6d6 solid 1px;
+}
+
+.photo {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+}
+
+
+/* 带照片核对单：表格居中显示 */
+.hdd-table {
+    margin: auto;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+/* hdd-header 样式 */
+.hdd-header-line1, .hdd-header-line2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.hdd-left {
+    flex: 1;
+    text-align: left;
+}
+
+.hdd-center {
+    flex: 1;
+    text-align: center;
+}
+
+.hdd-right {
+    flex: 1;
+    text-align: right;
+}
+
+/* 无照片核对单：带表头，一个考生一行 */
+.checklist-table {
+    margin: auto;
+    padding: 10px;
+    border-collapse: collapse;
+    table-layout: fixed; /* 防止个别列过宽，均分列宽 */
+}
+.checklist-table th, .checklist-table td {
+    padding: 4px 20px 4px;
+    border: 1px solid #999;
+    font-size: 13px;
+    text-align: center; /* 全部居中 */
+    vertical-align: middle;
+    white-space: normal; /* 允许换行 */
+    overflow-wrap: anywhere; /* 长内容换行，避免拉宽列 */
+}
+.checklist-table thead th {
+    background: #f5f5f5;
+}
+.signature-cell {
+    height: 24px;
+}
+
+/* 准考证样式 */
+.ticket-container {
+    width: 210mm;
+    min-height: 297mm;
+    margin: auto;
+    padding: 20mm 15mm;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    background: white;
+}
+
+.ticket-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.ticket-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+    color: #333;
+}
+
+/* 顶部区域：照片和个人信息 */
+.ticket-top-section {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.ticket-photo-container {
+    flex-shrink: 0;
+    border: 1px solid #cdcdcd;
+    padding: 5px;
+}
+
+.ticket-personal-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 160px;
+}
+
+.personal-info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.personal-label {
+    font-weight: bold;
+    margin-right: 10px;
+    min-width: 80px;
+}
+
+.personal-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* 考试信息表格 */
+.ticket-exam-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.ticket-exam-table td {
+    border: 1px solid #333;
+    padding: 5px 5px;
+    vertical-align: middle;
+}
+
+.exam-label {
+    font-weight: bold;
+    width: 20%;
+    text-align: right;
+}
+
+.exam-value {
+    width: 30%;
+    text-align: left;
+}
+
+.ticket-photo {
+    width: 120px;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+}
+
+.ticket-notice {
+    margin-top: 30px;
+    border-top: 2px solid #333;
+    padding-top: 20px;
+}
+
+.notice-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.notice-content {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #555;
+}
+
+/* 无照片时的准考证布局调整 */
+.ticket-container.no-photo .ticket-top-section {
+    justify-content: center;
+}
+
+.ticket-container.no-photo .ticket-personal-info {
+    min-height: auto;
+}
+
+.ticket-container.no-photo .personal-info-item {
+    margin-bottom: 20px;
+}
+
+.ticket-container.no-photo .ticket-exam-table {
+    margin-bottom: 50px;
+}
+
+.ticket-container.no-photo .ticket-notice {
+    margin-top: 50px;
+}
+
+/* 打印时的准考证样式优化 */
+@media print {
+    .ticket-container {
+        border: none;
+        margin: 0;
+        padding: 15mm 10mm;
+        page-break-after: always;
+    }
+    
+    .ticket-container:last-child {
+        page-break-after: auto;
+    }
+    
+    .ticket-photo-container {
+        border-color: #000;
+    }
+    
+    .ticket-exam-table td {
+        border-color: #000;
+    }
+    
+    .ticket-notice {
+        border-top-color: #000;
+    }
+}
+
+/* 桌贴样式 */
+.desk-label-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: auto;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    background: white;
+    page-break-after: always;
+}
+
+.desk-label-page:last-child {
+    page-break-after: auto;
+}
+
+/* 考场信息标题 */
+.desk-room-header {
+    text-align: center;
+    margin-bottom: 10px;
+    padding: 5px;
+}
+
+.desk-room-subtitle {
+    font-size: 18px;
+    margin: 5px 0 0 0;
+    color: #000000;
+}
+
+/* 页码提示 */
+.desk-page-info {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* 桌贴列表容器 */
+.desk-labels-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 单个桌贴 */
+.desk-label-item {
+    border: 1px solid #333;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+/* 桌贴左侧信息 */
+.desk-label-left {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.desk-label-info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    flex: 1;
+}
+
+.desk-label-info-label {
+    font-weight: bold;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 2px;
+}
+
+.desk-label-info-value {
+    color: #333;
+    font-family: monospace;
+    font-size: 12px;
+    text-align: center;
+    word-break: break-all;
+}
+
+/* 桌贴右侧信息 */
+.desk-label-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    gap: 2px;
+}
+
+.desk-label-seat-label {
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+}
+
+.desk-label-seat {
+    font-size: 26px;
+    font-weight: bold;
+    color: #000000;
+}
+
+.desk-label-room {
+    font-size: 12px;
+    color: #666;
+}
+
+/* 打印时的桌贴样式优化 */
+@media print {
+    .desk-label-page {
+        border: none;
+        margin: 0;
+        padding: 3mm 3mm;
+        page-break-after: always;
+    }
+    
+    .desk-label-page:last-child {
+        page-break-after: auto;
+    }
+    
+    .desk-label-item {
+        page-break-inside: avoid;
+    }
+    
+    .desk-label-item:nth-child(20n) {
+        margin-bottom: 10px;
+    }
+}
+
+/* 美化不需要打印的区域 */
+.no-print {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 操作区域标题样式 */
+.no-print h3, .no-print h4 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 按钮美化 */
+.no-print button {
+    background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin: 2px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.no-print button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.no-print button:active {
+    transform: translateY(0);
+}
+
+/* 特殊按钮样式 */
+#uploadBtn {
+    background: linear-gradient(145deg, #11998e 0%, #38ef7d 100%);
+    box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+}
+
+#uploadBtn:hover {
+    box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+}
+
+#printBtn {
+    background: linear-gradient(145deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+}
+
+#printBtn:hover {
+    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+}
+
+/* 文件信息显示样式 */
+.no-print span, .no-print a {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 1px 5px;
+    margin: 3px;
+    border-radius: 5px;
+    color: #2c3e50;
+    font-size: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 分割线样式 */
+.no-print hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+    margin: 10px 0;
+}
+
+/* 左右布局样式（仅作用于操作区 .no-print 内部） */
+.no-print #left {
+    width: 50%;
+    float: left;
+    padding-right: 20px;
+    box-sizing: border-box;
+}
+
+.no-print #right {
+    width: 50%;
+    float: right;
+    padding-left: 20px;
+    box-sizing: border-box;
+    min-height: 200px; /* 设置最小高度 */
+}
+
+.no-print #right textarea {
+    min-height: 200px; /* 设置最小高度 */
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.no-print #right label {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+/* 排序选项美化 */
+.sorting-options {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sorting-options label {
+    display: inline-block;
+    margin: 5px 10px 5px 0;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 13px;
+    min-width: 120px;
+}
+
+.sorting-options select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 2px 10px 2px 0;
+    font-size: 13px;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.sorting-options select:hover {
+    border-color: rgba(102, 126, 234, 0.6);
+    background: rgba(255, 255, 255, 1);
+}
+
+.sorting-options select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.sorting-options button {
+    background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin: 2px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.sorting-options button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.sorting-options button:active {
+    transform: translateY(0);
+}
+
+/* 操作分组样式 */
+.no-print #left > div {
+    background: rgba(255, 255, 255, 0.6);
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.no-print #left > div:first-child {
+    background: rgba(17, 153, 142, 0.1);
+    border-color: rgba(17, 153, 142, 0.2);
+}
+
+.no-print #left > div:nth-child(2) {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.2);
+}
+
+.no-print #left > div:nth-child(3) {
+    background: rgba(245, 87, 108, 0.1);
+    border-color: rgba(245, 87, 108, 0.2);
+}
+
+.no-print #left > div:nth-child(5) {
+    background: rgba(240, 147, 251, 0.1);
+    border-color: rgba(240, 147, 251, 0.2);
+}
+
+.no-print #left > div:nth-child(7) {
+    background: rgba(56, 239, 125, 0.1);
+    border-color: rgba(56, 239, 125, 0.2);
+}
+
+/* 响应式设计优化 */
+@media (max-width: 768px) {
+    .no-print {
+        margin-bottom: 12px;
+    }
+    
+    .no-print button {
+        padding: 6px;
+        font-size: 12px;
+        margin: 1px;
+    }
+    
+    .no-print #left > div {
+        padding: 10px;
+        margin-bottom: 8px;
+    }
+}
+
+/* 仅清除操作区浮动，不影响后续内容 */
+.no-print::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* 确保主内容从浮动之后开始 */
+.a4-paper { clear: both; }
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .no-print #left, .no-print #right {
+        width: 100%;
+        float: none;
+        padding: 0;
+        margin-bottom: 20px;
+        min-height: auto; /* 在小屏幕上取消固定高度 */
+    }
+    
+    .no-print #right textarea {
+        height: 300px; /* 在小屏幕上设置较小的高度 */
+        min-height: 300px;
+    }
+}
