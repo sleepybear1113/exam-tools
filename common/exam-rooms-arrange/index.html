@@ -6,7 +6,7 @@
     <link href="../../lib/bootstrap/5.3.8/bootstrap.min.css" rel="stylesheet">
     <script src="../../lib/bootstrap/5.3.8/bootstrap.bundle.min.js"></script>
     <script src="../../lib/vue/3.5.20/vue.global.prod.js"></script>
-    <script src="../../lib/sheetjs/0.20.3/xlsx.mini.min.js"></script>
+    <script src="../../lib/sheetjs/0.20.3/xlsx.full.min.js"></script>
 
     <script type="module" src="./js/excel-utils.js"></script>
     <script src="./js/classes.js"></script>
@@ -42,6 +42,9 @@
             <div>
                 <button @click="arrangeStuIntoRooms(false)">安排试场(顺序)</button>
                 <button @click="arrangeStuIntoRooms(true)">安排试场(随机)</button>
+                <button @click="exportDataToExcel" :disabled="!arrangedRooms || !arrangedRooms.length">
+                    导出Excel编排数据
+                </button>
             </div>
 
             <div>
@@ -84,7 +87,7 @@
                     <h5 class="hdd-header-line1">
                         <span class="hdd-left">{{ room.schoolName }}</span>
                         <span class="hdd-center">{{ room.typeName}}({{ room.typeId }}) {{ room.name }}</span>
-                        <span class="hdd-right">{{ room.students.length }}人</span>
+                        <span class="hdd-right">考场号：{{ room.roomName}}({{ room.students.length }}人)</span>
                     </h5>
                     <h5 class="hdd-header-line2">
                         <span class="hdd-left">考试时间：{{ room.time }}</span>
@@ -232,7 +235,7 @@
                         </tr>
                         <tr>
                             <td class="exam-label">考场号：</td>
-                            <td class="exam-value">{{ room.name }}</td>
+                            <td class="exam-value">{{ room.roomName }}</td>
                             <td class="exam-label">座位号：</td>
                             <td class="exam-value">{{ sameStudentGroup.students[index].seatNo }}</td>
                         </tr>

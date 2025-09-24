@@ -1,10 +1,13 @@
 import {readExcel} from "./excel-utils.js";
 
+// noinspection JSUnresolvedReference
 const {createApp, ref, computed, nextTick} = Vue;
 
+// noinspection JSUnusedGlobalSymbols
 let vm = createApp({
 
     setup() {
+        // noinspection SpellCheckingInspection
         const emptyPng = ref("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
 
         const examName = ref("20xxxxx年嘉兴市职业技能操作考试");
@@ -14,8 +17,11 @@ let vm = createApp({
         const picFolderSelect = ref(null);
         const picFolderName = ref("");
         const picFileList = ref([]);
-        const studentsRaw = ref([]);
+
         const roomsRaw = ref([]);
+
+        const studentsProcessed = ref([]);
+        const roomsProcessed = ref([]);
         const arrangedRooms = ref([]);
         const random = ref(false); // 是否随机打乱学生顺序
 
@@ -129,8 +135,8 @@ let vm = createApp({
                     room.students.forEach(student => {
                         if (student.photo) {
                             // 从URL中提取文件名（这里简化处理）
-                            const photoName = student.ksh && photoMap.has(student.ksh) ? student.ksh : 
-                                            student.idCard && photoMap.has(student.idCard) ? student.idCard : null;
+                            const photoName = student.ksh && photoMap.has(student.ksh) ? student.ksh :
+                                student.idCard && photoMap.has(student.idCard) ? student.idCard : null;
                             if (photoName) {
                                 matchedPhotoNames.add(photoName);
                             }
@@ -170,16 +176,16 @@ let vm = createApp({
             const firstFile = files[0];
             const folderPath = firstFile.webkitRelativePath || firstFile.name;
             const folderName = folderPath.split('/')[0] || "未知文件夹";
-            
+
             // 过滤出图片文件
             const imageFiles = Array.from(files).filter(file => {
                 const fileName = file.name.toLowerCase();
-                return fileName.endsWith('.jpg') || 
-                       fileName.endsWith('.jpeg') || 
-                       fileName.endsWith('.png') || 
-                       fileName.endsWith('.gif') || 
-                       fileName.endsWith('.bmp') || 
-                       fileName.endsWith('.webp');
+                return fileName.endsWith('.jpg') ||
+                    fileName.endsWith('.jpeg') ||
+                    fileName.endsWith('.png') ||
+                    fileName.endsWith('.gif') ||
+                    fileName.endsWith('.bmp') ||
+                    fileName.endsWith('.webp');
             });
 
             picFolderName.value = folderName;
@@ -187,7 +193,7 @@ let vm = createApp({
             event.target.value = ""; // 清空，保证能重复选择同一个文件夹
 
             addMessage("success", `成功选择文件夹: ${folderName}，包含 ${imageFiles.length} 个图片文件`);
-            
+
             // 自动匹配照片到学生
             matchPhotosToStudents();
         };
@@ -205,7 +211,6 @@ let vm = createApp({
             try {
                 dataList = await readExcel(file);
             } catch (e) {
-                console.error("解析Excel出错：", e);
                 addMessage("danger", `解析Excel出错：${e.message}`);
                 fileName.value = "";
                 event.target.value = ""; // 关键：清空，保证能重复选择同一个文件
@@ -214,23 +219,23 @@ let vm = createApp({
             fileName.value = file.name;
             event.target.value = ""; // 关键：清空，保证能重复选择同一个文件
 
-            let {students, rooms} = processExcelData(dataList);
+            let {students, rooms, roomsRawVal} = processExcelData(dataList);
             if (!rooms || rooms.length === 0) {
-                console.warn("未解析到有效的考场数据");
                 addMessage("warning", "未解析到有效的考场数据");
                 return;
             }
 
             if (!students || students.length === 0) {
-                console.warn("未解析到有效的学生数据");
                 addMessage("warning", "未解析到有效的学生数据");
                 return;
             }
 
+            roomsRaw.value = roomsRawVal;
+
             let arrangeRooms = processRoomsData(rooms);
 
-            studentsRaw.value = students;
-            roomsRaw.value = arrangeRooms;
+            studentsProcessed.value = students;
+            roomsProcessed.value = arrangeRooms;
         };
 
         const processRoomsData = (rooms) => {
@@ -264,13 +269,14 @@ let vm = createApp({
                     if (roomIdStr) {
                         let expandRangesRes = expandRanges(roomIdStr);
                         if (expandRangesRes.error) {
-                            console.error(`考点 ${room.schoolName} (${room.schoolId})，类别 ${room.typeName} (${room.typeId})，试场 ${room.roomName} (${room.roomId}) 的试场号解析错误：${expandRangesRes.error}，跳过该考场`);
                             addMessage("warning", `考点 ${room.schoolName} (${room.schoolId})，类别 ${room.typeName} (${room.typeId})，试场 ${room.roomName} (${room.roomId}) 的试场号解析错误：${expandRangesRes.error}，跳过该考场`);
                             return;
                         }
                         let roomIds = expandRangesRes.result.map(Number);
+                        // noinspection JSCheckFunctionSignatures
                         addCurrRoomsAll = mergeRoomIds(currRoomsAll, {count: null, arr: roomIds});
                     } else {
+                        // noinspection JSCheckFunctionSignatures
                         addCurrRoomsAll = mergeRoomIds(currRoomsAll, {count: roomCount, arr: null});
                     }
 
@@ -292,11 +298,10 @@ let vm = createApp({
         const processExcelData = (dataList) => {
             let result = {students: [], rooms: []};
             if (!dataList || dataList.length === 0) {
-                console.warn("数据为空");
                 addMessage("warning", "数据为空");
                 return result;
             }
-            
+
             examName.value = dataList.shift()?.[0] || "考试安排";
 
             let splitSymbol = "!分割列!";
@@ -311,7 +316,6 @@ let vm = createApp({
             }
 
             if (splitSymbolIndex === -1) {
-                console.warn("未找到分割列");
                 addMessage("danger", `未找到分割列，请确保第一行包含 "${splitSymbol}" 列`);
                 return result;
             }
@@ -379,7 +383,7 @@ let vm = createApp({
             }
 
             // 解析数据行
-            
+
             if (examNoticeIndex !== -1) {
                 let data = dataList[1][examNoticeIndex];
                 if (data && typeof data === "string") {
@@ -389,6 +393,7 @@ let vm = createApp({
 
             let students = [];
             let rooms = [];
+            let roomsRawVal = [];
             for (let i = 1; i < dataList.length; i++) {
                 let row = dataList[i];
 
@@ -425,7 +430,7 @@ let vm = createApp({
                 if (student.validate()) {
                     students.push(student);
                 } else {
-                    addMessage("warning", `第${i + 1}行学生数据不完整，跳过：${JSON.stringify(row)}`);
+                    addMessage("warning", `第${i + 1}行学生数据不完整，请检查是否数据全部都填充（如类别代码、身份证号码等），跳过该行。`);
                 }
 
                 // 解析考场
@@ -442,15 +447,19 @@ let vm = createApp({
                     row[roomHeaderIndexes.capacity],
                     row[roomHeaderIndexes.remark]
                 );
-                if (room.validate()) {
-                    rooms.push(room);
-                } else if (!room.allEmptyProps()) {
-                    addMessage("warning", `第${i + 1}行考场数据不完整，跳过：${JSON.stringify(row)}`);
+
+                if (!room.allEmptyProps()) {
+                    if (room.validate()) {
+                        rooms.push(room);
+                    } else {
+                        addMessage("warning", `第${i + 1}行考场数据不完整，请检查是否数据全部都填充，跳过该行。`);
+                    }
+                    roomsRawVal.push(room);
                 }
             }
 
             addMessage("info", `解析完成，共${students.length}个学生，${rooms.length}个考场`);
-            return {students, rooms};
+            return {students, rooms, roomsRawVal};
         }
 
         const expandRanges = (str, mustContinuous) => {
@@ -585,13 +594,13 @@ let vm = createApp({
             }
             // 按照考点、类别、时间分组学生
             let studentCopy = [];
-            studentsRaw.value.forEach(student => studentCopy.push(student.copy()));
+            studentsProcessed.value.forEach(student => studentCopy.push(student.copy()));
             if (randomInput) {
                 studentCopy = studentCopy.sort(() => Math.random() - 0.5);
             }
 
             let roomsCopy = [];
-            roomsRaw.value.forEach(room => {
+            roomsProcessed.value.forEach(room => {
                 let roomClone = room.copy();
                 roomClone.students = [];
                 roomsCopy.push(roomClone);
@@ -624,15 +633,26 @@ let vm = createApp({
                     }
 
                 } else {
-                    console.warn(`未找到考点 ${student.schoolName} (${student.schoolId})，类别 ${student.typeName} (${student.typeId}) 的考场，无法安排该学生 ${student.name} (${student.ksh})`);
                     addMessage("warning", `未找到考点 ${student.schoolName} (${student.schoolId})，类别 ${student.typeName} (${student.typeId}) 的考场，无法安排该学生 ${student.name} (${student.ksh})`);
                 }
             });
 
             // 输出安排结果，仅包含有学生的考场
-            let res = roomsCopy.filter(room => room.students.length > 0);
-            arrangedRooms.value = res;
-            
+            let filterRooms = roomsCopy.filter(room => room.students.length > 0);
+            let roomIdMaxLength = String(filterRooms.length).length;
+            if (roomIdMaxLength < 2) {
+                roomIdMaxLength = 2;
+            }
+            for (let i = 0; i < filterRooms.length; i++) {
+                // 对 room.roomName 进行编号，根据数量前补0
+                filterRooms[i].roomName = `${String(i + 1).padStart(roomIdMaxLength, '0')}`;
+                // 更新学生的 roomName
+                filterRooms[i].students.forEach(student => {
+                    student.roomName = filterRooms[i].roomName;
+                });
+            }
+            arrangedRooms.value = filterRooms;
+
             // 自动匹配照片到学生
             matchPhotosToStudents();
 
@@ -686,9 +706,7 @@ let vm = createApp({
             });
 
             // 转换为数组并过滤掉只有一个学生的分组
-            const groups = Array.from(groupMap.values());
-
-            return groups;
+            return Array.from(groupMap.values());
         });
 
         // 准考证排序（自动）：根据所选排序键自动返回排序后的分组
@@ -696,7 +714,7 @@ let vm = createApp({
             if (!sameStudentGroupList.value || sameStudentGroupList.value.length === 0) {
                 return [];
             }
-            const sortedGroups = [...sameStudentGroupList.value].sort((a, b) => {
+            return [...sameStudentGroupList.value].sort((a, b) => {
                 // 首要排序
                 let result = 0;
                 if (admissionTicketSortKey.value) {
@@ -712,7 +730,6 @@ let vm = createApp({
                 }
                 return result;
             });
-            return sortedGroups;
         });
 
         // 重置排序方法
@@ -749,12 +766,12 @@ let vm = createApp({
                 if (room.students && room.students.length > 0) {
                     const totalStudents = room.students.length;
                     const totalPages = Math.ceil(totalStudents / studentsPerPage);
-                    
+
                     for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
                         const startIndex = pageIndex * studentsPerPage;
                         const endIndex = Math.min(startIndex + studentsPerPage, totalStudents);
                         const pageStudents = room.students.slice(startIndex, endIndex);
-                        
+
                         pages.push({
                             room: room,
                             pageIndex: pageIndex,
@@ -769,6 +786,157 @@ let vm = createApp({
 
             return pages;
         });
+
+        const exportDataToExcel = () => {
+            // 参照方法 processExcelData 中的数据结构。第一行为examName，合并单元格。第二行为表头，第三行开始为数据
+            // 其中，学生数据在前，考场数据在后，中间用空列分隔。
+            // 学生数据列：姓名、考生号、班级、类别代码、试场号、座位号、身份证号、考点代码。使用的是安排后的数据，按照id升序排列
+            // 考场数据列：考点代码、考点名称、类别代码、类别名称、考试时间、试场号、容纳人数、该考试时间下的试场数、备注。使用的是原始数据，按照id升序排列
+            // 最后一列为准考证考生必读
+            // 学生和考场数据行数一般不相等
+            if (!arrangedRooms.value || arrangedRooms.value.length === 0) {
+                addMessage("warning", "没有安排结果可导出");
+                return;
+            }
+
+            let data = [];
+            data.push([examName.value]);
+            let header = [
+                "姓名", "考生号", "班级", "类别代码", "试场号", "座位号", "身份证号", "考点代码",
+                "", "!分割列!", "",
+                "考点代码", "考点名称", "类别代码", "类别名称", "考试时间", "试场号", "容纳人数", "该考试时间下的试场数", "备注",
+                "", "准考证考生必读"
+            ];
+            data.push(header);
+
+            let maxRows = 0;
+            arrangedRooms.value.forEach(room => {
+                if (room.students) {
+                    maxRows += room.students.length;
+                }
+            });
+
+            if (roomsProcessed.value && roomsProcessed.value.length > maxRows) {
+                maxRows = roomsProcessed.value.length;
+            }
+
+            let studentList = [];
+            arrangedRooms.value.forEach(room => {
+                if (room.students && room.students.length > 0) {
+                    room.students.forEach(student => {
+                        studentList.push(student);
+                    });
+                }
+            });
+
+            for (let i = 0; i < maxRows; i++) {
+                let row = [];
+                // 学生数据
+                let student = studentList[i];
+                if (student) {
+                    row.push(student.name || "");
+                    row.push(student.ksh || "");
+                    row.push(student.className || "");
+                    row.push(student.typeId || "");
+                    row.push(student.roomName || "");
+                    row.push(student.seatNo != null ? String(student.seatNo) : "");
+                    row.push(student.idCard || "");
+                    row.push(student.schoolId || "");
+                } else {
+                    row.push("", "", "", "", "", "", "", "");
+                }
+
+                // 分割列
+                row.push("");
+                row.push(i < 2 ? "!分割列!" : "");
+                row.push("");
+
+                // 考场数据
+                let room = roomsRaw.value[i];
+                if (room) {
+                    row.push(room.schoolId || "");
+                    row.push(room.schoolName || "");
+                    row.push(room.typeId || "");
+                    row.push(room.typeName || "");
+                    row.push(room.time || "");
+                    row.push(room.roomId || "");
+                    row.push(room.capacity != null ? String(room.capacity) : "");
+                    row.push(room.count != null ? String(room.count) : "");
+                    row.push(room.remark || "");
+                } else {
+                    row.push("", "", "", "", "", "", "", "", "");
+                }
+
+                // 准考证考生必读
+                if (i === 0) {
+                    row.push("");
+                    row.push(examNotice.value || "");
+                }
+
+                data.push(row);
+            }
+
+            // 删除多余的空行（尾部）
+            for (let i = data.length - 1; i >= 2; i--) {
+                let row = data[i];
+                let allEmpty = row.every(cell => cell === "" || cell === "!分割列!");
+                if (allEmpty) {
+                    data.pop();
+                } else {
+                    break;
+                }
+            }
+
+            // 使用xlsx库导出Excel
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+            // 合并第一行单元格
+            worksheet['!merges'] = [{s: {r: 0, c: 0}, e: {r: 0, c: header.length - 1}}];
+
+            // 全部设置为文本格式，防止长数字被科学计数法显示，同时带边框
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cell_address = {c: C, r: R};
+                    const cell_ref = XLSX.utils.encode_cell(cell_address);
+                    if (!worksheet[cell_ref]) {
+                        worksheet[cell_ref] = {t: 's', v: ""};
+                    } else {
+                        worksheet[cell_ref].t = 's';
+                        if (typeof worksheet[cell_ref].v === 'number') {
+                            worksheet[cell_ref].v = String(worksheet[cell_ref].v);
+                        }
+                    }
+                    // 设置边框
+                    if (!worksheet[cell_ref].s) {
+                        worksheet[cell_ref].s = {};
+                    }
+                    if (!worksheet[cell_ref].s.border) {
+                        worksheet[cell_ref].s.border = {};
+                    }
+                    const borderStyle = {style: "thin", color: {auto: 1}};
+                    worksheet[cell_ref].s.border.top = borderStyle;
+                    worksheet[cell_ref].s.border.bottom = borderStyle;
+                    worksheet[cell_ref].s.border.left = borderStyle;
+                    worksheet[cell_ref].s.border.right = borderStyle;
+                }
+            }
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "安排结果");
+
+            const wbout = XLSX.write(workbook, {bookType: 'xlsx', type: 'array'});
+            const blob = new Blob([wbout], {type: "application/octet-stream"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${examName.value || '考试安排'}-安排结果.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            addMessage("success", "安排结果已生成完毕，准备导出为Excel文件...");
+        };
 
         return {
             examName,
@@ -793,8 +961,8 @@ let vm = createApp({
             tab,
             switchTab,
             handleFileChange,
-            studentsRaw,
-            roomsRaw,
+            studentsRaw: studentsProcessed,
+            roomsRaw: roomsProcessed,
             arrangedRooms,
             random,
             arrangeStuIntoRooms,
@@ -807,9 +975,11 @@ let vm = createApp({
             admissionTicketSecondarySortKey,
             sortedSameStudentGroupList,
             resetAdmissionTicketSort,
+            exportDataToExcel,
         };
     }
 });
+// noinspection JSUnresolvedReference
 let vmm = vm.mount("#exam-rooms-arrange");
 window.examRoomArrangeApp = vmm;
 
