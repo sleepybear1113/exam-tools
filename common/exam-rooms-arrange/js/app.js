@@ -921,6 +921,7 @@ let vm = createApp({
                 }
             }
 
+            addMessage("success", "安排结果已生成完毕，准备导出为Excel文件...");
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "安排结果");
 
@@ -935,7 +936,7 @@ let vm = createApp({
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            addMessage("success", "安排结果已生成完毕，准备导出为Excel文件...");
+            addMessage("success", "安排结果已成功导出为Excel文件，共 " + (data.length - 2) + " 行数据，学生 " + (studentList.length) + " 人，考场 " + (roomsRaw.value.length) + " 个");
         };
 
         return {
