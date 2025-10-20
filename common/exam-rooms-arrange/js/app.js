@@ -402,6 +402,10 @@ let vm = createApp({
                     if (typeof row[j] === "string" && row[j].startsWith("#")) {
                         row[j] = "";
                     }
+
+                    if (row[j] === null || row[j] === undefined) {
+                        row[j] = "";
+                    }
                 }
 
                 for (let j = 0; j < row.length; j++) {
