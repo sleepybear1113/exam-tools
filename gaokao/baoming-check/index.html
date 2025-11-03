@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选考报名数据校验</title>
+    <link rel="stylesheet" href="../../lib/bootstrap/5.3.8/bootstrap.min.css">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="container py-4" id="app">
+        <h1 class="h4 mb-3">选考报名数据校验</h1>
+
+        <div class="row g-3 align-items-end">
+            <div class="col-auto">
+                <label class="form-label mb-1">目标日期（用于计算年龄）</label>
+                <div class="d-flex gap-2">
+                    <select class="form-select" id="yearSelect" aria-label="年份"></select>
+                    <select class="form-select" id="monthSelect" aria-label="月份"></select>
+                    <select class="form-select" id="daySelect" aria-label="日期"></select>
+                </div>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-secondary" id="btnClear">清空表格</button>
+            </div>
+            <div class="col-auto ms-auto d-flex gap-2">
+                <button class="btn btn-primary" id="btnExportAll" disabled>导出全部</button>
+                <button class="btn btn-outline-primary" id="btnExportZip" disabled>按报名点导出ZIP</button>
+            </div>
+        </div>
+
+        <div class="dropzone mt-3" id="dropzone">
+            <div class="dz-inner text-muted">
+                拖动 .xlsx 文件到此处（或整个页面）解析；也可点击选择
+                <input type="file" id="fileInput" accept=".xlsx" class="d-none">
+                <button class="btn btn-link p-0 align-baseline" id="btnPick">选择文件</button>
+            </div>
+        </div>
+
+        <div class="table-responsive mt-3">
+            <table class="table table-sm table-bordered align-middle" id="resultTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>序号</th>
+                        <th>报名序号</th>
+                        <th>身份证号</th>
+                        <th>姓名</th>
+                        <th>学籍辅号</th>
+                        <th>报名点</th>
+                        <th>年级</th>
+                        <th>班级</th>
+                        <th>报考的选考科目</th>
+                        <th>报考选考数量</th>
+                        <th>报考的学考科目</th>
+                        <th>报考学考数量</th>
+                        <th>报考的外语科目</th>
+                        <th>提示</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+ 
+         <div id="loadingOverlay" class="loading-overlay d-none">
+             <div class="loading-content">
+                 <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                 <div class="mt-2 text-secondary small">正在处理，请稍候…</div>
+             </div>
+         </div>
+    </div>
+
+    <script src="../../lib/bootstrap/5.3.8/bootstrap.bundle.min.js"></script>
+    <script src="../../lib/sheetjs/0.20.3/xlsx.mini.min.js"></script>
+    <script src="../../lib/jszip/3.10.1/jszip.min.js"></script>
+
+    <script src="./app.js"></script>
+</body>
+<!--
+字段表头：BMXH SFZH XM XBDM XJFH BMD NJ BJ KM_YW KM_SX KM_YY KM_SZ KM_LS KM_DL KM_WL KM_HX KM_SW KM_JS SHZT LXDH WYYZ
+-->
+</html>
+
