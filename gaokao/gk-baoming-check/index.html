@@ -91,9 +91,13 @@
 
     <script type="module">
         import * as pdfjsLib from "../../lib/pdfjs/5.4.394/pdf.min.js";
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "../../lib/pdfjs/5.4.394/pdf.worker.min.mjs";
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+            "../../lib/pdfjs/5.4.394/pdf.worker.min.mjs",
+            import.meta.url
+        ).href;
         window.pdfjsLib = pdfjsLib;
     </script>
+
     <script src="./app.js"></script>
 </body>
 </html>
