@@ -1,0 +1,35 @@
+.dropzone {
+	border: 2px dashed #c9c9c9;
+	border-radius: 8px;
+	padding: 24px;
+	text-align: center;
+	background: #fafafa;
+}
+
+.dropzone.dragging {
+	border-color: #0d6efd;
+	background: #eef5ff;
+}
+
+.dz-inner { font-size: 14px; }
+
+table.table td, table.table th { vertical-align: middle; }
+
+.loading-overlay {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(255,255,255,0.8);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 2000;
+}
+
+.loading-overlay.d-none { display: none; }
+
+.loading-content { text-align: center; }
+
+

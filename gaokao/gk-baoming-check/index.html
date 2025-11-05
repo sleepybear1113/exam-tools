@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高考报名数据校验-考生报名表PDF</title>
+    <link href="../../lib/bootstrap/5.3.8/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="container py-4">
+        <h1 class="h4 mb-3">高考报名数据校验-考生报名表PDF</h1>
+
+        <div class="row g-3 align-items-end">
+            <div class="col-auto">
+                <button class="btn btn-secondary" id="btnClear" disabled>清空</button>
+            </div>
+        </div>
+
+        <div class="dropzone mt-3" id="dropzone">
+            <div class="dz-inner text-muted">
+                拖动 PDF 到此处（或整个页面），也可点击选择
+                <input type="file" id="fileInput" accept="application/pdf" class="d-none">
+                <button class="btn btn-link p-0 align-baseline" id="btnPick">选择PDF</button>
+            </div>
+        </div>
+
+        <div class="row mt-3 g-3">
+            <div class="col-12 col-lg-5">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>统计信息</span>
+                        <button class="btn btn-sm btn-outline-secondary" id="btnExportStats" disabled>导出统计Excel</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="statsContainer" class="small"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-7">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>提示信息</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-muted small" id="warningCount">0 条</span>
+                            <button class="btn btn-sm btn-primary" id="btnExportAll" disabled>导出全部Excel</button>
+                            <div class="form-check form-check-inline m-0">
+                                <input class="form-check-input" type="checkbox" id="chkZip" />
+                                <label class="form-check-label" for="chkZip">导出ZIP</label>
+                            </div>
+                            <select class="form-select form-select-sm" id="groupLenSelect" style="width:180px" disabled>
+                                <option value="code">按报名点代码</option>
+                                <option value="code3">按报名点代码前3位</option>
+                            </select>
+                            <button class="btn btn-sm btn-outline-primary" id="btnExportZip" disabled>导出ZIP</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle" id="warnTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>序号</th>
+                                        <th>考生号</th>
+                                        <th>报名点代码</th>
+                                        <th>报名点</th>
+                                        <th>班级</th>
+                                        <th>姓名</th>
+                                        <th>提示</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingOverlay" class="loading-overlay d-none">
+            <div class="loading-content">
+                <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                <div class="mt-2 text-secondary small">正在处理，请稍候…</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../lib/bootstrap/5.3.8/bootstrap.bundle.min.js"></script>
+    <script src="../../lib/sheetjs/0.20.3/xlsx.mini.min.js"></script>
+    <script src="../../lib/jszip/3.10.1/jszip.min.js"></script>
+
+    <script type="module">
+        import * as pdfjsLib from "../../lib/pdfjs/5.4.394/pdf.min.js";
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "../../lib/pdfjs/5.4.394/pdf.worker.min.mjs";
+        window.pdfjsLib = pdfjsLib;
+    </script>
+    <script src="./app.js"></script>
+</body>
+</html>
