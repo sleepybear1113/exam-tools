@@ -121,8 +121,9 @@
     function validateHeader(pages) {
         if (!pages.length) return '未能读取PDF内容';
         const first = normalizeSpaces(pages[0]);
-        const ok = /^20\d{2}年浙江省普通高校/.test(first);
-        if (!ok) return '上传的PDF格式不正确';
+        const ok1 = /^20\d{2}年浙江省普通高校/.test(first);
+        const ok2 = /^20\d{2}年浙江省单独考试/.test(first);
+        if (!ok1 && !ok2) return '上传的PDF格式不正确';
         return '';
     }
 
