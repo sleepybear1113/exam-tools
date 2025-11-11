@@ -504,7 +504,7 @@
         pushMap('考生类别', stats.by['考生类别']);
         const ws2 = XLSX.utils.json_to_sheet(statRows);
         XLSX.utils.book_append_sheet(wb, ws2, '统计信息');
-        XLSX.writeFile(wb, "${currentYear}年高考报名-部分信息核对汇总表.xlsx");
+        XLSX.writeFile(wb, `${currentYear}年高考报名-部分信息核对汇总表.xlsx`);
     }
 
     function exportStatsExcel() {
