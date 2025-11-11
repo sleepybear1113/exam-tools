@@ -19,6 +19,8 @@
     let warnings = []; // {ksHao, bj, xm, tips[]}
     let stats = null; // 统计数据
 
+    let currentYear = "xxxx";
+
     const CHINA_SHI_PREFIXES = [
         "石家庄", "唐山", "秦皇岛", "邯郸", "邢台", "保定", "张家口", "承德", "沧州", "廊坊", "衡水",
         "太原", "大同", "阳泉", "长治", "晋城", "朔州", "晋中", "运城", "忻州", "临汾", "吕梁",
@@ -175,6 +177,7 @@
         const ok1 = /^20\d{2}年浙江省普通高校/.test(first);
         const ok2 = /^20\d{2}年浙江省单独考试/.test(first);
         if (!ok1 && !ok2) return '上传的PDF格式不正确';
+        currentYear = first.substring(0, 4);
         return '';
     }
 
@@ -582,7 +585,8 @@
             const ws = XLSX.utils.json_to_sheet(sheetData);
             XLSX.utils.book_append_sheet(wb, ws, '提示信息');
             const wbout = XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
-            zip.file(`提示-${g}.xlsx`, wbout);
+            // xxxx年高考报名表-部分信息核对汇总表-xxx.xlsx。xxxx是年份pdf表头可得
+            zip.file(`${currentYear}年高考报名表-部分信息核对汇总表-${g}.xlsx`, wbout);
         }
         const blob = await zip.generateAsync({type: 'blob'});
         downloadBlob(blob, mode === 'code3' ? '按报名点代码前3位分组.zip' : '按报名点代码分组.zip');
