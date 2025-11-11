@@ -504,7 +504,7 @@
         pushMap('考生类别', stats.by['考生类别']);
         const ws2 = XLSX.utils.json_to_sheet(statRows);
         XLSX.utils.book_append_sheet(wb, ws2, '统计信息');
-        XLSX.writeFile(wb, '高考报名-提示与统计.xlsx');
+        XLSX.writeFile(wb, "${currentYear}年高考报名-部分信息核对汇总表.xlsx");
     }
 
     function exportStatsExcel() {
@@ -589,7 +589,10 @@
             zip.file(`${currentYear}年高考报名表-部分信息核对汇总表-${g}.xlsx`, wbout);
         }
         const blob = await zip.generateAsync({type: 'blob'});
-        downloadBlob(blob, mode === 'code3' ? '按报名点代码前3位分组.zip' : '按报名点代码分组.zip');
+        // 添加后缀年月日时分秒
+        let filename = currentYear + "年高考报名表-部分信息核对汇总表-" + (mode === 'code3' ? '按报名点代码前3位分组' : '按报名点代码分组') + '-'
+        new Date().toISOString().replace(/[-:]/g, '').replace('T', '_').substring(0, 15) + '.zip';
+        downloadBlob(blob, filename);
     }
 
     function downloadBlob(blob, filename) {
