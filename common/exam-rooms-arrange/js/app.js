@@ -774,7 +774,9 @@ let vm = createApp({
             }
 
             const pages = [];
-            const studentsPerPage = 15; // 固定每页15个学生
+            const studentsPerColumn = 10;
+            const columnsPerPage = 3;
+            const studentsPerPage = studentsPerColumn * columnsPerPage;
 
             arrangedRooms.value.forEach(room => {
                 if (room.students && room.students.length > 0) {
@@ -786,11 +788,19 @@ let vm = createApp({
                         const endIndex = Math.min(startIndex + studentsPerPage, totalStudents);
                         const pageStudents = room.students.slice(startIndex, endIndex);
 
+                        const columns = [];
+                        for (let columnIndex = 0; columnIndex < columnsPerPage; columnIndex++) {
+                            const columnStart = columnIndex * studentsPerColumn;
+                            const columnEnd = columnStart + studentsPerColumn;
+                            columns.push(pageStudents.slice(columnStart, columnEnd));
+                        }
+
                         pages.push({
                             room: room,
                             pageIndex: pageIndex,
                             totalPages: totalPages,
                             students: pageStudents,
+                            columns: columns,
                             startIndex: startIndex,
                             endIndex: endIndex
                         });

@@ -345,8 +345,8 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
 /* 考场信息标题 */
 .desk-room-header {
     text-align: center;
-    margin-bottom: 10px;
-    padding: 5px;
+    margin-bottom: 0;
+    padding: 0;
 }
 
 .desk-room-subtitle {
@@ -366,6 +366,15 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
 
 /* 桌贴列表容器 */
 .desk-labels-container {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.desk-label-column {
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -379,30 +388,30 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
     justify-content: space-between;
     align-items: center;
     box-sizing: border-box;
-    margin-bottom: 10px;
+    padding: 6px 8px;
+    margin: 5px;
 }
 
 /* 桌贴左侧信息 */
 .desk-label-left {
     flex: 1;
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
 }
 
 .desk-label-info-item {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     min-width: 0;
-    flex: 1;
+    line-height: 1;
 }
 
 .desk-label-info-label {
     font-weight: bold;
-    font-size: 12px;
+    font-size: 14px;
     color: #666;
     margin-bottom: 2px;
 }
@@ -410,8 +419,8 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
 .desk-label-info-value {
     color: #333;
     font-family: monospace;
-    font-size: 12px;
-    text-align: center;
+    font-size: 14px;
+    text-align: left;
     word-break: break-all;
 }
 
@@ -421,7 +430,7 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-width: 60px;
+    min-width: 70px;
     gap: 2px;
 }
 

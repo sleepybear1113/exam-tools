@@ -279,14 +279,15 @@
 
                 <!-- 考场信息标题 -->
                 <div class="desk-room-header">
-                    <p class="desk-room-subtitle">
-                        {{ page.room.schoolName }} [{{ page.room.typeName }}({{ page.room.typeId }})]
-                        {{ page.room.name }}
-                        共 {{ page.room.students.length }} 人
+                    <div class="desk-room-subtitle">
+                        {{ examName }}-桌贴
+                        <br>
+                        [{{ page.room.typeId + " " +page.room.typeName }}]
+                        {{ page.room.name }}-考场号：{{ page.room.roomName }}
                         <span v-if="page.totalPages > 1">
                             | 第 {{ page.pageIndex + 1 }}/{{ page.totalPages }} 页
                         </span>
-                    </p>
+                    </div>
                 </div>
 
                 <!-- 页码提示（仅多页时显示） -->
@@ -295,31 +296,33 @@
                     ({{ page.startIndex + 1 }}-{{ page.endIndex }} / {{ page.room.students.length }})
                 </div>
 
-                <hr>
-
                 <!-- 桌贴列表 -->
                 <div class="desk-labels-container">
-                    <div v-for="student in page.students" :key="student.ksh" class="desk-label-item">
-                        <!-- 左侧信息 -->
-                        <div class="desk-label-left">
-                            <div class="desk-label-info-item">
-                                <div class="desk-label-info-label">姓名：{{ student.name }}</div>
-                                <div class="desk-label-info-value">准考证号：{{ student.ksh }}</div>
-                            </div>
-                            <div class="desk-label-info-item">
-                                <div class="desk-label-info-value">类别：{{ page.room.typeId + " " + page.room.typeName }}</div>
+                    <div v-for="(column, columnIndex) in page.columns"
+                         :key="`desk-column-${page.room.id}-${page.pageIndex}-${columnIndex}`"
+                         class="desk-label-column">
+                        <div v-for="student in column" :key="student.ksh" class="desk-label-item">
+                            <!-- 左侧信息 -->
+                            <div class="desk-label-left">
+                                <div class="desk-label-info-item">
+                                    <div class="desk-label-info-label">姓名：{{ student.name }}</div>
+                                    <div class="desk-label-info-value">准考证号：{{ student.ksh }}</div>
+                                </div>
+                                <div class="desk-label-info-item">
+                                    <div class="desk-label-info-value">类别：{{ page.room.typeId + " " + page.room.typeName }}</div>
+                                </div>
+
+                                <div class="desk-label-info-item">
+                                    <div class="desk-label-info-label">考场号：{{ page.room.roomName }}</div>
+                                </div>
                             </div>
 
-                            <div class="desk-label-info-item">
-                                <div class="desk-label-info-label">考场号：{{ page.room.roomName }}</div>
-                            </div>
-                        </div>
-
-                        <!-- 右侧座位信息 -->
-                        <div class="desk-label-right">
-                            <div class="desk-label-room">
-                                <span class="desk-label-seat-label">座位号&nbsp;&nbsp;</span>
-                                <span class="desk-label-seat">{{ student.seatNo }}</span>
+                            <!-- 右侧座位信息 -->
+                            <div class="desk-label-right">
+                                <div class="desk-label-room">
+                                    <span class="desk-label-seat-label">座位号&nbsp;&nbsp;</span>
+                                    <span class="desk-label-seat">{{ student.seatNo }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
