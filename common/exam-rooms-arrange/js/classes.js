@@ -78,7 +78,7 @@ class Room {
     }
 
     validate() {
-        return !(!this.typeId || !this.typeName || !this.time || !this.count || !this.capacity);
+        return !(!this.typeId || !this.time || !this.count || !this.capacity);
     }
 
     allEmptyProps() {

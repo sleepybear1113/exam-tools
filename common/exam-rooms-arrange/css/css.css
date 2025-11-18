@@ -41,14 +41,22 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
     align-items: center;
     width: 100%;
     margin-bottom: 1px;
-    border: gray solid 1px;
-    padding: 5px;
+    /*border: gray solid 1px;*/
+    padding: 1px 0;
+    box-sizing: border-box;
+    min-height: 165px;
+}
+
+.info-text .id-text-font{
+    font-size: 10px;
+
 }
 
 .info-text p {
     margin: 0;
     padding: 0;
-    font-size: 12px;
+    font-size: 11px;
+    width: 100%;
 }
 
 /* 每行 5 个单元格，等宽排列 */
@@ -68,7 +76,7 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
     align-items: center;
     justify-content: center;
     margin-bottom: 6px;
-    border: #d6d6d6 solid 1px;
+    /*border: #d6d6d6 solid 1px;*/
 }
 
 .photo {
@@ -80,9 +88,11 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
 
 /* 带照片核对单：表格居中显示 */
 .hdd-table {
-    margin: auto;
     border-collapse: collapse;
     table-layout: fixed;
+    margin: 6px auto 0;
+    width: 100%;
+    max-width: calc(210mm - 20mm);
 }
 
 /* hdd-header 样式 */
@@ -90,7 +100,7 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 0;
+    margin: 0 5px 10px 0;
     padding: 0;
     font-size: 16px;
     font-weight: bold;
@@ -135,6 +145,27 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
 }
 
 /* 准考证样式 */
+.exam-title {
+    white-space: pre-line;
+}
+
+.checklist-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.checklist-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #2c3e50;
+    padding: 4px 8px;
+}
+
 .ticket-container {
     width: 210mm;
     min-height: 297mm;

@@ -77,17 +77,25 @@
     <div class="main a4-paper" v-if="arrangedRooms.length > 0">
         <div v-if="tab === '核对单'">
             <div class="no-print">
-                <h3 class="middle">核对单</h3>
-                <button @click="switchPicShown(true)">带照片</button>
-                <button @click="switchPicShown(false)">不带照片</button>
+                <h3 class="middle exam-title">核对单</h3>
+                <div class="checklist-controls">
+                    <div>
+                        <button @click="switchPicShown(true)">带照片</button>
+                        <button @click="switchPicShown(false)">不带照片</button>
+                    </div>
+                    <label class="checklist-option">
+                        <input type="checkbox" v-model="hideIdCard">
+                        隐藏身份证号
+                    </label>
+                </div>
             </div>
 
             <div v-for="(room, index) in arrangedRooms" :key="room.id">
                 <div class="middle hdd-header">
-                    <h4 class="middle" style="text-align: center">{{examName}}</h4>
+                    <h4 class="middle exam-title" style="text-align: center">{{examName}}</h4>
                     <h5 class="hdd-header-line1">
                         <span class="hdd-left">{{ room.schoolName }}</span>
-                        <span class="hdd-center">{{ room.typeName}}({{ room.typeId }}) {{ room.name }}</span>
+                        <span class="hdd-center">{{ room.typeId }} {{ room.typeName}} {{ room.name }}</span>
                         <span class="hdd-right">考场号：{{ room.roomName}}({{ room.students.length }}人)</span>
                     </h5>
                     <h5 class="hdd-header-line2">
@@ -103,10 +111,10 @@
                                     <img :src="student.photo || emptyPng" alt="照片" class="photo">
                                 </div>
                                 <div class="info-text">
-                                    <p>{{ student.idCard }}</p>
-                                    <p>{{ student.ksh }}</p>
+                                    <p>准考证号：{{ student.ksh }}</p>
+                                    <p class="id-text-font" v-if="!hideIdCard">{{ student.idCard }}</p>
+                                    <p>姓名：{{ student.name }}</p>
                                     <p>座位号: {{ student.seatNo }}</p>
-                                    <p>{{ student.name }}</p>
                                     <p>签名</p>
                                 </div>
                             </div>
@@ -121,7 +129,7 @@
                     <thead>
                     <tr>
                         <th>序号</th>
-                        <th>身份证号</th>
+                        <th v-if="!hideIdCard">身份证号</th>
                         <th>准考证号</th>
                         <th>座位号</th>
                         <th>姓名</th>
@@ -131,7 +139,7 @@
                     <tbody>
                     <tr v-for="(student, index) in room.students" :key="student.ksh">
                         <td>{{ index + 1 }}</td>
-                        <td>{{ student.idCard }}</td>
+                        <td v-if="!hideIdCard">{{ student.idCard }}</td>
                         <td>{{ student.ksh }}</td>
                         <td>{{ student.seatNo }}</td>
                         <td>{{ student.name }}</td>
@@ -157,7 +165,7 @@
                         <label for="primarySortKey">排序方式(首要)：</label>
                         <select v-model="admissionTicketSortKey" id="primarySortKey">
                             <option value="className">班级</option>
-                            <option value="ksh">考生号</option>
+                            <option value="ksh">准考证号</option>
                             <option value="name">姓名</option>
                             <option value="idCard">身份证号</option>
                         </select>
@@ -168,7 +176,7 @@
                         <select v-model="admissionTicketSecondarySortKey" id="secondarySortKey">
                             <option value="">无</option>
                             <option value="className">班级</option>
-                            <option value="ksh">考生号</option>
+                            <option value="ksh">准考证号</option>
                             <option value="name">姓名</option>
                             <option value="idCard">身份证号</option>
                         </select>
@@ -187,7 +195,7 @@
                  :class="['ticket-container', picShown ? 'with-photo' : 'no-photo']">
                 <!-- 准考证标题 -->
                 <div class="ticket-header">
-                    <h3 class="ticket-title" style="text-align: center">{{examName}}</h3>
+                    <h3 class="ticket-title exam-title" style="text-align: center">{{examName}}</h3>
                     <h3 class="ticket-title">考试准考证</h3>
                 </div>
 
@@ -200,7 +208,7 @@
                             <span class="personal-label">考生姓名：</span>
                             <span class="personal-value">{{ sameStudentGroup.name }}</span>
                         </div>
-                        <div class="personal-info-item">
+                        <div class="personal-info-item" v-if="sameStudentGroup.className">
                             <span class="personal-label">考生班级：</span>
                             <span class="personal-value">{{ sameStudentGroup.className }}</span>
                         </div>
@@ -230,7 +238,7 @@
                         </tr>
                         <tr>
                             <td class="exam-label">考试科目：</td>
-                            <td class="exam-value">{{ room.typeName }}</td>
+                            <td class="exam-value">{{ room.typeId + " " +room.typeName }}</td>
                             <td class="exam-label">考试时间：</td>
                             <td class="exam-value">{{ room.time || '-' }}</td>
                         </tr>
@@ -295,20 +303,15 @@
                         <!-- 左侧信息 -->
                         <div class="desk-label-left">
                             <div class="desk-label-info-item">
-                                <div class="desk-label-info-label">姓名</div>
-                                <div class="desk-label-info-value">{{ student.name }}</div>
+                                <div class="desk-label-info-label">姓名：{{ student.name }}</div>
+                                <div class="desk-label-info-value">准考证号：{{ student.ksh }}</div>
                             </div>
                             <div class="desk-label-info-item">
-                                <div class="desk-label-info-value">考生号{{ student.ksh }}</div>
-                                <div class="desk-label-info-value">身份证{{ student.idCard }}</div>
+                                <div class="desk-label-info-value">类别：{{ page.room.typeId + " " + page.room.typeName }}</div>
                             </div>
+
                             <div class="desk-label-info-item">
-                                <div class="desk-label-info-value">{{ page.room.typeName }}</div>
-                                <div class="desk-label-info-value">{{ page.room.time }}</div>
-                            </div>
-                            <div class="desk-label-info-item">
-                                <div class="desk-label-info-label">考场号</div>
-                                <div class="desk-label-info-value">{{ page.room.roomName }}</div>
+                                <div class="desk-label-info-label">考场号：{{ page.room.roomName }}</div>
                             </div>
                         </div>
 

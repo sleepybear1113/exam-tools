@@ -31,6 +31,7 @@ let vm = createApp({
         const tab = ref("核对单");
 
         const picShown = ref(true);
+        const hideIdCard = ref(false);
         const examNotice = ref("");
 
         // 准考证排序相关变量
@@ -302,7 +303,16 @@ let vm = createApp({
                 return result;
             }
 
-            examName.value = dataList.shift()?.[0] || "考试安排";
+            const titleRow = dataList.shift() || [];
+            let titleCell = titleRow[0];
+            if (typeof titleCell === "string") {
+                const normalized = titleCell.replace(/\r\n/g, '\n');
+                examName.value = normalized || "考试安排";
+            } else if (titleCell != null && titleCell !== "") {
+                examName.value = String(titleCell);
+            } else {
+                examName.value = "考试安排";
+            }
 
             let splitSymbol = "!分割列!";
             let splitSymbolIndex = -1;
@@ -674,7 +684,7 @@ let vm = createApp({
             if (!room || !Array.isArray(room.students)) {
                 return [];
             }
-            const chunkSize = 5;
+            const chunkSize = 6;
             const chunks = [];
             for (let i = 0; i < room.students.length; i += chunkSize) {
                 chunks.push(room.students.slice(i, i + chunkSize));
@@ -958,6 +968,7 @@ let vm = createApp({
             matchPhotosToStudents,
             picShown,
             switchPicShown,
+            hideIdCard,
             examNotice,
             messages,
             messagesText,
