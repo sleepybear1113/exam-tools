@@ -1,0 +1,71 @@
+.dropzone {
+	border: 2px dashed #c9c9c9;
+	border-radius: 8px;
+	padding: 24px;
+	text-align: center;
+	background: #fafafa;
+	transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.dropzone.dragging {
+	border-color: #0d6efd;
+	background: #eef5ff;
+}
+
+.dz-inner {
+	font-size: 14px;
+}
+
+.mapping-input {
+	font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+	white-space: pre;
+}
+
+table.table td,
+table.table th {
+	vertical-align: middle;
+}
+
+.table tbody tr.county-summary-row {
+	background: #fff8e8;
+	font-weight: 600;
+}
+
+.table tbody tr.grand-total-row {
+	background: #e7f3ff;
+	font-weight: 700;
+}
+
+.status-highlight {
+	color: #0d6efd;
+}
+
+.loading-overlay {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(255, 255, 255, 0.85);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1055;
+}
+
+.loading-overlay.d-none {
+	display: none;
+}
+
+.loading-content {
+	text-align: center;
+}
+
+#copyOutput {
+	font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+
+body.page-is-loading {
+	cursor: progress;
+}
+
