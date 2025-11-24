@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<!--suppress JSUnusedLocalSymbols -->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考试考务材料打印工具</title>
+    <!-- Local CSS -->
+    <link href="../../lib/bootstrap/5.3.8/bootstrap.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+<h2 class="app-title no-print">考试考务材料打印工具</h2>
+
+<div id="app" style="padding: 10px;">
+    <!-- 控制面板 -->
+    <div class="no-print control-panel">
+        <div class="row mb-3">
+            <!-- 第一列：选择文件 -->
+            <div class="col-md-4">
+                <div class="mb-2">
+                    <button class="btn btn-primary btn-sm" @click="selectFile">选择Excel文件</button>
+                    <input type="file" id="fileSelect" ref="fileSelect" @change="handleFileChange" accept=".xlsx,.xls"
+                           style="display:none"/>
+                </div>
+                <div class="file-drop-zone"
+                     @drop.prevent="handleFileDrop"
+                     @dragover.prevent="dragOver = true"
+                     @dragleave.prevent="dragOver = false"
+                     :class="{ 'drag-over': dragOver }">
+                    <div class="text-center small text-muted">或拖拽文件到此处</div>
+                </div>
+                <div v-if="fileName" class="small text-muted mt-2">已选择: {{ fileName }}</div>
+                <div class="mt-2">
+                    <a href="files/考场安排导入模板-样例.xlsx" download>
+                        <button class="btn btn-secondary btn-sm">下载Excel模板</button>
+                    </a>
+                </div>
+                <div v-if="processedData.length > 0" class="mt-2">
+                    <label class="form-label small">排序模式：</label>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" id="sortMode1" value="venue" v-model="sortMode">
+                        <label class="btn btn-outline-primary" for="sortMode1">考点优先</label>
+                        <input type="radio" class="btn-check" id="sortMode2" value="session" v-model="sortMode">
+                        <label class="btn btn-outline-primary" for="sortMode2">场次优先</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第二列：输出模块 -->
+            <div class="col-md-4">
+                <div v-if="processedData.length > 0">
+                    <label class="form-label small">输出模块：</label>
+                    <div class="btn-group-vertical btn-group-sm" role="group" style="width: 100%;">
+                        <button class="btn" @click="switchModule('handover')"
+                                :class="currentModule === 'handover' ? 'btn-success' : 'btn-outline-success'">
+                            交接单
+                        </button>
+                        <button class="btn"
+                                :class="currentModule === 'envelope' ? 'btn-success' : 'btn-outline-success'"
+                                @click="switchModule('envelope')">信封封面
+                        </button>
+                        <button class="btn" :class="currentModule === 'bundle' ? 'btn-success' : 'btn-outline-success'"
+                                @click="switchModule('bundle')">捆扎标签
+                        </button>
+                    </div>
+                </div>
+                <div v-if="currentModule === 'envelope'" class="mt-2">
+                    <label class="form-label small">
+                        左边距（mm）：
+                        <input type="number" class="form-control form-control-sm d-inline-block" style="width: 80px;"
+                               v-model.number="envelopeMarginLeft" min="0" max="50" step="1">
+                    </label>
+                </div>
+                <div v-if="currentModule === 'envelope'" class="mt-1">
+                    <label class="form-label small">
+                        上边距（mm）：
+                        <input type="number" class="form-control form-control-sm d-inline-block" style="width: 80px;"
+                               v-model.number="envelopeMarginTop" min="0" max="50" step="1">
+                    </label>
+                </div>
+                <div v-if="processedData.length > 0" class="mt-2">
+                    <button class="btn btn-success btn-sm" @click="printCurrent">打印当前模块</button>
+                </div>
+            </div>
+
+            <!-- 第三列：系统日志 -->
+            <div class="col-md-4">
+                <div class="small">
+                    <strong>系统日志：</strong>
+                    <div class="log-container">
+                        <div v-for="(msg, idx) in messages.slice(-10)" :key="idx" :class="'text-' + msg.type"
+                             class="log-item">
+                            {{ msg.text }}
+                        </div>
+                        <div v-if="messages.length === 0" class="text-muted">暂无日志</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <!-- 模块一：考试试卷答卷交接单 -->
+        <div v-if="currentModule === 'handover' && processedData.length > 0 && groupedData.length > 0"
+             class="print-content">
+            <div v-for="(group, groupIdx) in groupedData" :key="groupIdx">
+                <div v-if="group.items && group.items.length > 0" class="handover-page" contenteditable="true">
+                    <div class="handover-header">
+                        <h3 class="text-center mb-3">{{ examName }}</h3>
+                        <h4 class="text-center mb-4">考试试卷答卷交接单</h4>
+                    </div>
+                    <table class="table table-bordered handover-table">
+                        <thead>
+                        <tr>
+                            <th>科目</th>
+                            <th>试卷数</th>
+                            <th>答卷数</th>
+                            <th>条形码数</th>
+                            <th v-if="group.hasSpareVolume">备用卷数</th>
+                            <th v-if="group.hasDisc">光盘数</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="(item, idx) in group.items" :key="idx">
+                            <td>{{ item.subject }}</td>
+                            <td>{{ item.roomCount }}</td>
+                            <td>{{ item.roomCount }}</td>
+                            <td>{{ item.barcodeCount }}</td>
+                            <td v-if="group.hasSpareVolume">{{ item.spareVolumeCount || '--' }}</td>
+                            <td v-if="group.hasDisc">{{ item.discCount || '--' }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div class="handover-footer">
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>发送方：</strong>{{ group.items[0].sender }}</p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>发卷人：</strong>{{ group.items[0].issuer }}</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-12">
+                                <p><strong>接收方：</strong>{{ group.venueName }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <p><strong>接收人：</strong></p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <p><strong>交接时间：</strong>{{ group.items[0].handoverTimePrefix }}______时______分</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-break" v-if="groupIdx < groupedData.length - 1"><!-- 分页符 --></div>
+            </div>
+        </div>
+
+        <!-- 模块二：条形码信封袋封面 -->
+        <div v-if="currentModule === 'envelope' && processedData.length > 0" class="print-content">
+            <div v-for="(item, idx) in processedData" :key="idx" class="envelope-page"
+                 :style="{ marginLeft: envelopeMarginLeft + 'mm', marginTop: envelopeMarginTop + 'mm' }">
+                <div class="envelope-content" contenteditable="true">
+                    <div class="envelope-venue-name">{{ item.venueName }}</div>
+                    <table class="table table-bordered envelope-table">
+                        <tr>
+                            <td>科目：{{ item.subject }}</td>
+                            <td>起止号：{{ item.roomStart }}-{{ item.roomEnd }}</td>
+                        </tr>
+                        <tr>
+                            <td>条码：{{ item.barcodeCount }}</td>
+                            <td>考试时间：{{ item.examTime || '____' }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="page-break" v-if="idx < processedData.length - 1"><!-- 分页符 --></div>
+            </div>
+        </div>
+
+        <!-- 模块三：试卷/答卷捆扎标签 -->
+        <div v-if="currentModule === 'bundle' && bundlePages.length > 0" class="print-content">
+            <div v-for="(page, pageIdx) in bundlePages" :key="pageIdx">
+                <div v-if="page.paperBundle || page.answerBundle" class="bundle-page" contenteditable="true">
+                    <!-- 上联：试卷捆标签 -->
+                    <div class="bundle-label bundle-label-top">
+                        <div v-if="page.paperBundle" class="bundle-content">
+                            <h2 class="text-center bundle-title">试卷捆 {{ page.venueName ? page.venueName : "" }}</h2>
+                            <div v-for="(subjectData, subIdx) in page.paperBundle.subjects" :key="subIdx"
+                                 class="bundle-subject-group">
+                                <table class="table table-sm table-bordered bundle-table">
+                                    <tr>
+                                        <td><strong>科目：</strong>{{ subjectData.subject }}</td>
+                                        <td><strong>起止号：</strong>{{ subjectData.fullRange }}</td>
+                                        <td><strong>总捆数：</strong>共{{ subjectData.totalBundles }}捆</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>当前捆数量：</strong>{{ subjectData.quantity }}份</td>
+                                        <td><strong>总数量：</strong>{{ subjectData.totalCount }}份</td>
+                                        <td><strong>当前捆：</strong>第{{ subjectData.bundleNo }}捆</td>
+                                    </tr>
+                                    <tr v-if="!page.paperBundle.spareVolumeCount">
+                                        <td colspan="3"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
+                                        </td>
+                                    </tr>
+                                    <tr v-if="page.paperBundle && page.paperBundle.spareVolumeCount">
+                                        <td colspan="2"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
+                                        </td>
+                                        <td colspan="1"><strong>备用卷数量：</strong>{{ page.paperBundle.spareVolumeCount
+                                            }}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 下联：答卷捆标签 -->
+                    <div class="bundle-label bundle-label-bottom">
+                        <div v-if="page.answerBundle" class="bundle-content">
+                            <h3 class="text-center bundle-title">答卷捆 {{ page.venueName ? page.venueName : "" }}</h3>
+                            <div v-for="(subjectData, subIdx) in page.answerBundle.subjects" :key="subIdx"
+                                 class="bundle-subject-group">
+                                <table class="table table-sm table-bordered bundle-table">
+                                    <tr>
+                                        <td><strong>科目：</strong>{{ subjectData.subject }}</td>
+                                        <td><strong>起止号：</strong>{{ subjectData.fullRange }}</td>
+                                        <td><strong>总捆数：</strong>共{{ subjectData.totalBundles }}捆</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>当前捆数量：</strong>{{ subjectData.quantity }}份</td>
+                                        <td><strong>总数量：</strong>{{ subjectData.totalCount }}份</td>
+                                        <td><strong>当前捆：</strong>第{{ subjectData.bundleNo }}捆</td>
+                                    </tr>
+                                    <tr v-if="!page.answerBundle.spareVolumeCount">
+                                        <td colspan="3"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
+                                        </td>
+                                    </tr>
+                                    <tr v-if="page.answerBundle && page.answerBundle.spareVolumeCount">
+                                        <td colspan="2"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
+                                        </td>
+                                        <td colspan="1">
+                                            <strong>备用卷数量：</strong>{{ page.answerBundle.spareVolumeCount }}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page-break" v-if="pageIdx < bundlePages.length - 1"><!-- 分页符 --></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Local Scripts -->
+<script src="../../lib/bootstrap/5.3.8/bootstrap.bundle.min.js"></script>
+<script src="../../lib/sheetjs/0.20.3/xlsx.mini.min.js"></script>
+<script src="../../lib/vue/3.5.20/vue.global.prod.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

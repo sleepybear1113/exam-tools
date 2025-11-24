@@ -1,0 +1,280 @@
+/* 全局样式 */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Microsoft YaHei", "SimSun", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.app-title {
+    text-align: center;
+    margin: 20px 0;
+    color: #333;
+}
+
+/* 控制面板 */
+.control-panel {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.log-container {
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 11px;
+    line-height: 1.4;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    padding: 5px;
+    background-color: #fff;
+}
+
+.log-item {
+    margin: 2px 0;
+    padding: 2px 0;
+    color: #000 !important;
+}
+
+/* 文件拖拽区域 */
+.file-drop-zone {
+    border: 2px dashed #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 5px;
+    background-color: #f9f9f9;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.file-drop-zone:hover {
+    border-color: #007bff;
+    background-color: #f0f8ff;
+}
+
+.file-drop-zone.drag-over {
+    border-color: #007bff;
+    background-color: #e7f3ff;
+}
+
+.no-print {
+    display: block;
+}
+
+/* 打印样式 */
+@media print {
+    .no-print,
+    .no-print-element {
+        display: none !important;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .print-content {
+        margin: 0;
+        padding: 0;
+    }
+}
+
+/* ========== 模块一：考试试卷答卷交接单 ========== */
+.handover-page {
+    padding: 20mm 15mm;
+    min-width: 210mm; /* A4纵向宽度 */
+    min-height: 210mm; /* A4纵向高度 */
+}
+
+.handover-header {
+    margin-bottom: 20px;
+}
+
+.handover-header h3 {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.handover-header h4 {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.handover-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 60px;
+    font-size: 20px;
+}
+
+.handover-table th,
+.handover-table td {
+    border: 1px solid #000;
+    padding: 8px;
+    text-align: center;
+}
+
+.handover-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+.handover-footer {
+    margin-top: 40px;
+    font-size: 20px;
+}
+
+.handover-footer p {
+    margin: 10px 0;
+    line-height: 2;
+}
+
+/* ========== 模块二：条形码信封袋封面 ========== */
+.envelope-page {
+    min-width: 210mm; /* A4纵向宽度 */
+    min-height: 210mm; /* A4纵向高度 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.envelope-content {
+    text-align: center;
+}
+
+.envelope-venue-name {
+    font-size: 25px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.envelope-table {
+    width: auto;
+    margin: 0 auto;
+    border-collapse: collapse;
+    font-size: 16px;
+}
+
+.envelope-table td {
+    border: 1px solid #000;
+    padding: 8px 15px;
+    text-align: left;
+}
+
+/* ========== 模块三：试卷/答卷捆扎标签 ========== */
+.bundle-page {
+    min-width: 210mm; /* A4纵向宽度 */
+    min-height: 210mm; /* A4纵向高度 */
+    padding: 10mm;
+    display: flex;
+    flex-direction: column;
+}
+
+.bundle-label {
+    flex: 1;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 垂直居中 */
+    min-height: 120mm;
+}
+
+.bundle-label-top {
+    margin-bottom: 5mm;
+}
+
+.bundle-label-bottom {
+    margin-top: 5mm;
+}
+
+.bundle-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 垂直居中内容 */
+}
+
+.bundle-title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1px;
+}
+
+.bundle-subject-group {
+    margin-bottom: 3px;
+}
+
+.bundle-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 18px;
+    margin: 0 auto 0;
+}
+
+.bundle-table td {
+    border: 1px solid #000;
+    padding: 4px;
+    text-align: left;
+}
+
+.bundle-table td strong {
+    margin-right: 5px;
+}
+
+/* 响应式调整 */
+@media screen {
+    .print-content {
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .handover-page,
+    .envelope-page,
+    .bundle-page {
+        background: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+}
+
+/* 按钮样式增强 */
+.btn {
+    margin: 2px;
+}
+
+.btn-group .btn {
+    margin: 0;
+}
+
+/* 表单控件 */
+.form-label {
+    font-weight: 500;
+    margin-right: 10px;
+}
+
+.form-control-sm {
+    display: inline-block;
+}
+
+/* 消息样式 */
+.alert ul {
+    padding-left: 20px;
+}
+
+.alert li {
+    margin: 5px 0;
+}
+
+.page-break {
+    page-break-after: always;
+}
+
