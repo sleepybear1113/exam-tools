@@ -150,7 +150,7 @@ const vm = createApp({
                             "答卷捆分捆策略": "answerBundleStrategy",
                             "答卷捆科目合并": "answerSubjectMerge",
                             "备用卷数": "spareVolumeCount",
-                            "光盘数": "discCount",
+                            "听力盘数": "discCount",
                             "发送方": "sender",
                             "发卷人": "issuer",
                             "交接时间前缀": "handoverTimePrefix",
