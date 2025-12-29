@@ -18,8 +18,8 @@ const vm = createApp({
             const savedLeft = localStorage.getItem('envelopeMarginLeft');
             const savedTop = localStorage.getItem('envelopeMarginTop');
             return {
-                left: savedLeft ? parseInt(savedLeft) : 5,
-                top: savedTop ? parseInt(savedTop) : 5
+                left: savedLeft ? parseInt(savedLeft) : 15,
+                top: savedTop ? parseInt(savedTop) : 25
             };
         };
         const margins = loadEnvelopeMargins();
@@ -315,6 +315,9 @@ const vm = createApp({
             if (sortMode.value === "venue") {
                 // 考点优先：考点名称 > 场次 > Excel原始顺序
                 return data.sort((a, b) => {
+                    if (a.venueId !== b.venueId) {
+                        return a.venueId.localeCompare(b.venueId, "zh-CN");
+                    }
                     if (a.venueName !== b.venueName) {
                         return a.venueName.localeCompare(b.venueName, "zh-CN");
                     }
@@ -329,6 +332,9 @@ const vm = createApp({
                 return data.sort((a, b) => {
                     if (a.session !== b.session) {
                         return a.session - b.session;
+                    }
+                    if (a.venueId !== b.venueId) {
+                        return a.venueId.localeCompare(b.venueId, "zh-CN");
                     }
                     if (a.venueName !== b.venueName) {
                         return a.venueName.localeCompare(b.venueName, "zh-CN");
@@ -422,18 +428,9 @@ const vm = createApp({
                 mergeGroups.forEach((mergeItems) => {
                     // 计算总数（考场数之和）- 用于判断是否需要分捆
                     let totalCount = 0;
-                    // 计算备用卷总数
-                    let totalSpareVolume = 0;
                     mergeItems.forEach(item => {
                         if (item.roomCount !== "--" && !isNaN(item.roomCount)) {
                             totalCount += parseInt(item.roomCount);
-                        }
-                        // 收集备用卷数量
-                        if (item.spareVolumeCount && item.spareVolumeCount.trim() !== "" && item.spareVolumeCount !== "--") {
-                            const spareVol = parseInt(item.spareVolumeCount);
-                            if (!isNaN(spareVol) && spareVol > 0) {
-                                totalSpareVolume += spareVol;
-                            }
                         }
                     });
 
@@ -457,6 +454,7 @@ const vm = createApp({
                         let subjectCount = 0;
                         let subjectRoomStart = null;
                         let subjectRoomEnd = null;
+                        let subjectSpareVolume = 0; // 计算该科目的备用卷数量
 
                         subjectItems.forEach(item => {
                             if (item.roomCount !== "--" && !isNaN(item.roomCount)) {
@@ -471,6 +469,13 @@ const vm = createApp({
                                     subjectRoomEnd = item.roomEnd;
                                 }
                             }
+                            // 收集该科目的备用卷数量
+                            if (item.spareVolumeCount && item.spareVolumeCount.trim() !== "" && item.spareVolumeCount !== "--") {
+                                const spareVol = parseInt(item.spareVolumeCount);
+                                if (!isNaN(spareVol) && spareVol > 0) {
+                                    subjectSpareVolume += spareVol;
+                                }
+                            }
                         });
 
                         if (subjectCount > 0) {
@@ -480,7 +485,8 @@ const vm = createApp({
                                 roomStart: subjectRoomStart || '',
                                 roomEnd: subjectRoomEnd || '',
                                 fullRange: subjectRoomStart && subjectRoomEnd ? `${subjectRoomStart}-${subjectRoomEnd}` : '--',
-                                examTime: examTime
+                                examTime: examTime,
+                                spareVolumeCount: subjectSpareVolume > 0 ? subjectSpareVolume : null // 该科目的备用卷数量
                             });
                         }
                     });
@@ -534,15 +540,15 @@ const vm = createApp({
                                 quantity: s.totalCount,
                                 totalCount: s.totalCount,
                                 fullRange: s.fullRange,
-                                examTime: s.examTime
+                                examTime: s.examTime,
+                                spareVolumeCount: s.spareVolumeCount || null // 每个科目保留自己的备用卷数量
                             }));
 
                             bundles.push({
                                 venueName: venueName,
                                 subjects: subjectsData,
                                 bundleNo: bundleIndex + 1,
-                                totalBundles: 1,
-                                spareVolumeCount: totalSpareVolume > 0 ? totalSpareVolume : null // 尾数捆添加备用卷
+                                totalBundles: 1
                             });
 
                             bundleIndex++;
@@ -572,7 +578,8 @@ const vm = createApp({
                                     quantity: bundleQuantity,
                                     totalCount: subjData.totalCount,
                                     fullRange: subjData.fullRange,
-                                    examTime: subjData.examTime
+                                    examTime: subjData.examTime,
+                                    spareVolumeCount: isLastBundle && subjData.spareVolumeCount ? subjData.spareVolumeCount : null // 只在尾数捆添加当前科目的备用卷
                                 });
 
                                 // 如果是最后一捆，且后面还有合并科目，将所有只有一捆的后续科目都加入
@@ -593,7 +600,8 @@ const vm = createApp({
                                                 quantity: nextSubject.totalCount,
                                                 totalCount: nextSubject.totalCount,
                                                 fullRange: nextSubject.fullRange,
-                                                examTime: nextSubject.examTime
+                                                examTime: nextSubject.examTime,
+                                                spareVolumeCount: nextSubject.spareVolumeCount || null // 每个科目保留自己的备用卷数量
                                             });
                                             nextSubject.processed = true;
                                         }
@@ -605,8 +613,7 @@ const vm = createApp({
                                     venueName: venueName,
                                     subjects: subjectsData,
                                     bundleNo: bundleIndex,
-                                    totalBundles: subjData.bundleCount,
-                                    spareVolumeCount: isLastBundle && totalSpareVolume > 0 ? totalSpareVolume : null // 只在尾数捆添加备用卷
+                                    totalBundles: subjData.bundleCount
                                 });
                             }
                             subjData.processed = true;

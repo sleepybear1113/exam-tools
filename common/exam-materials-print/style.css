@@ -9,6 +9,10 @@ body {
     padding: 0;
 }
 
+hr {
+    margin: 5px 0;
+}
+
 .app-title {
     text-align: center;
     margin: 20px 0;
@@ -67,6 +71,13 @@ body {
 
 /* 打印样式 */
 @media print {
+    /* 强制打印背景色和背景图片 */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
     .no-print,
     .no-print-element {
         display: none !important;
@@ -80,6 +91,11 @@ body {
     .print-content {
         margin: 0;
         padding: 0;
+    }
+
+    /* 确保表格表头背景色在打印时显示 */
+    .handover-table th {
+        background-color: #f0f0f0 !important;
     }
 }
 
@@ -131,13 +147,13 @@ body {
 
 .handover-footer p {
     margin: 10px 0;
-    line-height: 2;
+    line-height: 1;
 }
 
 /* ========== 模块二：条形码信封袋封面 ========== */
 .envelope-page {
     min-width: 210mm; /* A4纵向宽度 */
-    min-height: 210mm; /* A4纵向高度 */
+    min-height: 110mm; /* A4纵向高度 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -239,7 +255,6 @@ body {
     .handover-page,
     .envelope-page,
     .bundle-page {
-        background: white;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         margin-bottom: 20px;
     }

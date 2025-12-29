@@ -150,14 +150,15 @@
                         </div>
                         <div class="row">
                             <div class="col-12">
-                                <p><strong>接收人：</strong></p>
+                                <p><strong>交接时间：</strong>{{ group.items[0].handoverTimePrefix }}______时______分</p>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-12">
-                                <p><strong>交接时间：</strong>{{ group.items[0].handoverTimePrefix }}______时______分</p>
+                                <p><strong>接收人：</strong></p>
                             </div>
                         </div>
+
                     </div>
                 </div>
                 <div class="page-break" v-if="groupIdx < groupedData.length - 1"><!-- 分页符 --></div>
@@ -207,15 +208,14 @@
                                         <td><strong>总数量：</strong>{{ subjectData.totalCount }}份</td>
                                         <td><strong>当前捆：</strong>第{{ subjectData.bundleNo }}捆</td>
                                     </tr>
-                                    <tr v-if="!page.paperBundle.spareVolumeCount">
+                                    <tr v-if="!subjectData.spareVolumeCount">
                                         <td colspan="3"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
                                         </td>
                                     </tr>
-                                    <tr v-if="page.paperBundle && page.paperBundle.spareVolumeCount">
+                                    <tr v-if="subjectData.spareVolumeCount">
                                         <td colspan="2"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
                                         </td>
-                                        <td colspan="1"><strong>备用卷数量：</strong>{{ page.paperBundle.spareVolumeCount
-                                            }}
+                                        <td colspan="1"><strong>备用卷数量：</strong>{{ subjectData.spareVolumeCount }}
                                         </td>
                                     </tr>
                                 </table>
@@ -240,15 +240,15 @@
                                         <td><strong>总数量：</strong>{{ subjectData.totalCount }}份</td>
                                         <td><strong>当前捆：</strong>第{{ subjectData.bundleNo }}捆</td>
                                     </tr>
-                                    <tr v-if="!page.answerBundle.spareVolumeCount">
+                                    <tr v-if="!subjectData.spareVolumeCount">
                                         <td colspan="3"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
                                         </td>
                                     </tr>
-                                    <tr v-if="page.answerBundle && page.answerBundle.spareVolumeCount">
+                                    <tr v-if="subjectData.spareVolumeCount">
                                         <td colspan="2"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
                                         </td>
                                         <td colspan="1">
-                                            <strong>备用卷数量：</strong>{{ page.answerBundle.spareVolumeCount }}
+                                            <strong>备用卷数量：</strong>{{ subjectData.spareVolumeCount }}
                                         </td>
                                     </tr>
                                 </table>
