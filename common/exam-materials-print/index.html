@@ -194,7 +194,7 @@
                     <!-- 上联：试卷捆标签 -->
                     <div class="bundle-label bundle-label-top">
                         <div v-if="page.paperBundle" class="bundle-content">
-                            <h2 class="text-center bundle-title">试卷捆 {{ page.venueName ? page.venueName : "" }}</h2>
+                            <h2 class="text-center bundle-title">试卷捆 {{ page.paperBundle.venueName ? page.paperBundle.venueName : "" }}</h2>
                             <div v-for="(subjectData, subIdx) in page.paperBundle.subjects" :key="subIdx"
                                  class="bundle-subject-group">
                                 <table class="table table-sm table-bordered bundle-table">
@@ -226,7 +226,7 @@
                     <!-- 下联：答卷捆标签 -->
                     <div class="bundle-label bundle-label-bottom">
                         <div v-if="page.answerBundle" class="bundle-content">
-                            <h3 class="text-center bundle-title">答卷捆 {{ page.venueName ? page.venueName : "" }}</h3>
+                            <h3 class="text-center bundle-title">答卷捆 {{ page.answerBundle.venueName ? page.answerBundle.venueName : "" }}</h3>
                             <div v-for="(subjectData, subIdx) in page.answerBundle.subjects" :key="subIdx"
                                  class="bundle-subject-group">
                                 <table class="table table-sm table-bordered bundle-table">

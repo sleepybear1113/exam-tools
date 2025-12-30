@@ -39,7 +39,6 @@ const vm = createApp({
         // 添加日志消息
         const addMessage = (type, text) => {
             messages.value.push({type, text, time: new Date().toLocaleTimeString()});
-            console.log(`[${type}] ${text}`);
         };
 
         // 选择文件
@@ -305,8 +304,6 @@ const vm = createApp({
             if (invalidCount > 0) {
                 addMessage("warning", `共跳过 ${invalidCount} 行无效数据`);
             }
-
-            console.log(processedData)
         };
 
         // 排序后的数据
@@ -376,9 +373,7 @@ const vm = createApp({
                 }
             });
             // 按照原始顺序返回，过滤掉没有items的组
-            let filter = groupOrder.map(key => groups.get(key)).filter(group => group.items.length > 0);
-            console.log(filter);
-            return filter;
+            return groupOrder.map(key => groups.get(key)).filter(group => group.items.length > 0);
         });
 
         // 生成分捆数据
@@ -404,6 +399,8 @@ const vm = createApp({
             // 处理每个考点+场次组
             groups.forEach((items) => {
                 const venueName = items[0].venueName;
+                const venueId = items[0].venueId;
+                const session = items[0].session;
                 // 计算整个组的起止号范围（取最小起始号和最大结束号）
                 let minStartStr = null, maxEndStr = null;
                 items.forEach(item => {
@@ -549,6 +546,8 @@ const vm = createApp({
 
                             bundles.push({
                                 venueName: venueName,
+                                venueId: venueId,
+                                session: session,
                                 subjects: subjectsData,
                                 bundleNo: bundleIndex + 1,
                                 totalBundles: 1
@@ -614,6 +613,8 @@ const vm = createApp({
 
                                 bundles.push({
                                     venueName: venueName,
+                                    session: session,
+                                    venueId: venueId,
                                     subjects: subjectsData,
                                     bundleNo: bundleIndex,
                                     totalBundles: subjData.bundleCount
@@ -695,7 +696,48 @@ const vm = createApp({
                 }
             });
 
-            return pages;
+            let papers = [];
+            let answers = [];
+            pages.forEach(page => {
+                if (page.paperBundle) {
+                    page.paperBundle.firstSubjectName = page.paperBundle.subjects.length > 0 ? page.paperBundle.subjects[0].subject : '';
+                    papers.push(page.paperBundle);
+                }
+                if (page.answerBundle) {
+                    page.answerBundle.firstSubjectName = page.answerBundle.subjects.length > 0 ? page.answerBundle.subjects[0].subject : '';
+                    answers.push(page.answerBundle);
+                }
+            });
+            if (sortMode.value === "session") {
+                // 按场次排序
+                [papers, answers].forEach(list => {
+                    list.sort((a, b) => {
+                        if (a.session !== b.session) {
+                            return a.session - b.session;
+                        }
+                        if (a.firstSubjectName !== b.firstSubjectName) {
+                            return a.firstSubjectName.localeCompare(b.firstSubjectName, "zh-CN");
+                        }
+                        if (a.venueId !== b.venueId) {
+                            return a.venueId - b.venueId;
+                        }
+                        if (a.venueName !== b.venueName) {
+                            return a.venueName.localeCompare(b.venueName, "zh-CN");
+                        }
+                    });
+                });
+            }
+            
+            let maxLen = Math.max(papers.length, answers.length);
+            let balancedPages = [];
+            for (let i = 0; i < maxLen; i++) {
+                balancedPages.push({
+                    paperBundle: papers[i] || null,
+                    answerBundle: answers[i] || null
+                });
+            }
+
+            return balancedPages;
         });
 
         // 切换模块
