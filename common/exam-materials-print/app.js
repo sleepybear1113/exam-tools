@@ -333,6 +333,9 @@ const vm = createApp({
                     if (a.session !== b.session) {
                         return a.session - b.session;
                     }
+                    if (a.subject !== b.subject) {
+                        return a.subject.localeCompare(b.subject, "zh-CN");
+                    }
                     if (a.venueId !== b.venueId) {
                         return a.venueId.localeCompare(b.venueId, "zh-CN");
                     }
