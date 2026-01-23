@@ -10,6 +10,7 @@ const vm = createApp({
         const processedData = ref([]);
         const examName = ref("");
         const sortMode = ref("venue"); // "venue" or "session"
+        const paperIntact = ref("0");
         const currentModule = ref("handover"); // "handover", "envelope", "bundle"
         const dragOver = ref(false);
 
@@ -727,7 +728,7 @@ const vm = createApp({
                     });
                 });
             }
-            
+
             let maxLen = Math.max(papers.length, answers.length);
             let balancedPages = [];
             for (let i = 0; i < maxLen; i++) {
@@ -769,12 +770,18 @@ const vm = createApp({
             // 数据已通过computed自动更新
         });
 
+        watch(paperIntact, () => {
+            // 数据已通过computed自动更新
+        });
+
+
         return {
             fileSelect,
             fileName,
             processedData: sortedData,
             examName,
             sortMode,
+            paperIntact,
             currentModule,
             envelopeMarginLeft,
             envelopeMarginTop,
@@ -791,5 +798,5 @@ const vm = createApp({
     }
 });
 
-vm.mount("#app");
+vm.mount("#app-exam-materials-print");
 

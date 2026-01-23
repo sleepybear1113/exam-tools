@@ -13,7 +13,7 @@
 
 <h2 class="app-title no-print">考试考务材料打印工具</h2>
 
-<div id="app" style="padding: 10px;">
+<div id="app-exam-materials-print" style="padding: 10px;">
     <!-- 控制面板 -->
     <div class="no-print control-panel">
         <div class="row mb-3">
@@ -38,12 +38,23 @@
                     </a>
                 </div>
                 <div v-if="processedData.length > 0" class="mt-2">
-                    <label class="form-label small">排序模式：</label>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <input type="radio" class="btn-check" id="sortMode1" value="venue" v-model="sortMode">
-                        <label class="btn btn-outline-primary" for="sortMode1">考点优先</label>
-                        <input type="radio" class="btn-check" id="sortMode2" value="session" v-model="sortMode">
-                        <label class="btn btn-outline-primary" for="sortMode2">场次优先</label>
+                    <div>
+                        <label class="form-label small">排序模式：</label>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <input type="radio" class="btn-check" id="sortMode1" value="venue" v-model="sortMode">
+                            <label class="btn btn-outline-primary" for="sortMode1">考点优先</label>
+                            <input type="radio" class="btn-check" id="sortMode2" value="session" v-model="sortMode">
+                            <label class="btn btn-outline-primary" for="sortMode2">场次优先</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label small">显示试卷完好：</label>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <input type="radio" class="btn-check" id="paper-intact1" value="0" v-model="paperIntact">
+                            <label class="btn btn-outline-primary" for="paper-intact1">不显示</label>
+                            <input type="radio" class="btn-check" id="paper-intact2" value="1" v-model="paperIntact">
+                            <label class="btn btn-outline-primary" for="paper-intact2">显示</label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -120,6 +131,7 @@
                             <th>条形码数</th>
                             <th v-if="group.hasSpareVolume">备用卷数</th>
                             <th v-if="group.hasDisc">听力盘数</th>
+                            <th v-if="paperIntact === '1'">试卷情况</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -130,6 +142,7 @@
                             <td>{{ item.barcodeCount }}</td>
                             <td v-if="group.hasSpareVolume">{{ item.spareVolumeCount || '--' }}</td>
                             <td v-if="group.hasDisc">{{ item.discCount || '--' }}</td>
+                            <td v-if="paperIntact === '1'">密封完好</td>
                         </tr>
                         </tbody>
                     </table>
