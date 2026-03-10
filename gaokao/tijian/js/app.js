@@ -12,6 +12,7 @@ const app = createApp({
             inputPageSize: 100,
             inputPage: 1,
             processing: false,
+            isDragging: false,
             currentRow: 0,
             totalRows: 0,
             errorStudents: []
@@ -69,10 +70,27 @@ const app = createApp({
             fileInput.addEventListener('change', this.handleFileSelect);
             fileInput.click();
         },
+        onDragOver() {
+            this.isDragging = true;
+        },
+        onDragLeave() {
+            this.isDragging = false;
+        },
+        onDrop(event) {
+            this.isDragging = false;
+            const file = event.dataTransfer.files[0];
+            if (file && file.name.toLowerCase().endsWith('.dbf')) {
+                this.handleFile(file);
+            } else {
+                alert('请上传 .dbf 格式的文件');
+            }
+        },
         handleFileSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
-
+            this.handleFile(file);
+        },
+        handleFile(file) {
             this.selectedFileName = file.name;
             this.processing = true;
             this.currentRow = 0;
@@ -212,4 +230,4 @@ const app = createApp({
     },
 });
 
-app.mount('#app'); 
+app.mount('#tijian');

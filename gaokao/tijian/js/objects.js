@@ -3,6 +3,7 @@ class Student {
         // 显式定义字段
         this.id = data.id || '';
         this.XM = data.XM || '';        // 姓名
+        this.XBDM = data.XBDM || '';    // 性别代码
         this.BMXH = data.BMXH || '';    // 报名序号
 
         this.YK_LYSLY = data.YK_LYSLY || '';  // 右眼裸眼视力
@@ -54,8 +55,8 @@ class Student {
     static getFields() {
         return [
             '序号',
-            '异常信息',
-            'XM', 'BMXH',
+            '可能存在异常的检查信息',
+            'XM', 'XBDM', 'BMXH',
             'YK_LYSLY', 'YK_LYSLZ',
             'YK_JZSLY', 'YK_JZSLZ',
             'YK_JZDSY', 'YK_JZDSZ',
@@ -71,70 +72,83 @@ class Student {
 
     checkValidate() {
         const pushError = (desc, val) => {
-            this.errorList.push(`${desc} 异常值: ${val}`);
+            this.errorList.push(`${desc} (实测值: ${val})`);
         };
 
         // 裸眼视力校验
         for (let eye of this.eyes) {
             const {name, val, jzsl, jzds} = eye;
-            if (val === 0 || val < 4.0 || val > 5.4) pushError(`裸眼视力(${name}眼)不在4.0-5.4范围内`, val);
+            if (val === 0 || val < 4.0 || val > 5.4) pushError(`裸眼视力(${name}眼)偏离正常值(4.0-5.4)`, val);
 
-            if (val < 5.0 && this.TJSXBZ[4] !== '1') pushError(`${name}眼视力低于5.0但TJSXBZ第5位不为1`, this.TJSXBZ);
-            if (val < 4.8 && this.TJSXBZ[5] !== '1') pushError(`${name}眼视力低于4.8但TJSXBZ第6位不为1`, this.TJSXBZ);
+            if (val < 5.0 && this.TJSXBZ[4] !== '1') pushError(`${name}眼视力低于5.0，但体检受限标志(第5位)不匹配`, this.TJSXBZ);
+            if (val < 4.8 && this.TJSXBZ[5] !== '1') pushError(`${name}眼视力低于4.8，但体检受限标志(第6位)不匹配`, this.TJSXBZ);
 
             // 矫正视力校验
-            if (val >= 4.8 && jzsl) pushError(`${name}眼视力正常但有矫正视力`, jzsl);
-            if (val < 4.8 && jzsl !== 4.8) pushError(`${name}眼视力低于4.8但矫正视力不为4.8`, jzsl);
+            if (val >= 4.8 && jzsl) pushError(`${name}眼视力正常，但包含矫正视力数据`, jzsl);
+            if (val < 4.8 && jzsl !== 4.8) pushError(`${name}眼视力低于4.8，但矫正视力非标准值(4.8)`, jzsl);
 
             // 矫正度数校验
             if (jzds) {
-                if (jzds < 0 || jzds > 1200) pushError(`${name}眼矫正度数超范围`, jzds);
-                if (jzds < 100 && val < 4.5) pushError(`${name}眼矫正度数<100但裸眼视力低于4.5`, val);
-                if (jzds > 400 && val > 4.6) pushError(`${name}眼矫正度数>400但裸眼视力高于4.6`, val);
-                if (jzds > 800 && val > 4.4) pushError(`${name}眼矫正度数>800但裸眼视力高于4.4`, val);
-                if (jzds > 400 && this.TJSXBZ[10] !== '1') pushError(`${name}眼矫正度数>400但TJSXBZ第11位不为1`, this.TJSXBZ);
-                if (jzds > 800 && this.TJSXBZ[11] !== '1') pushError(`${name}眼矫正度数>800但TJSXBZ第12位不为1`, this.TJSXBZ);
+                if (jzds < 0 || jzds > 1200) pushError(`${name}眼矫正度数偏离正常范围(0-1200)`, jzds);
+                if (jzds < 100 && val < 4.5) pushError(`${name}眼矫正度数较小(${jzds})，但裸眼视力偏低`, val);
+                if (jzds > 400 && val > 4.6) pushError(`${name}眼矫正度数较大(${jzds})，但裸眼视力较高`, val);
+                if (jzds > 800 && val > 4.4) pushError(`${name}眼矫正度数较大(${jzds})，但裸眼视力较高`, val);
+                if (jzds > 400 && this.TJSXBZ[10] !== '1') pushError(`${name}眼矫正度数超过400，但体检受限标志(第11位)不匹配`, this.TJSXBZ);
+                if (jzds > 800 && this.TJSXBZ[11] !== '1') pushError(`${name}眼矫正度数超过800，但体检受限标志(第12位)不匹配`, this.TJSXBZ);
             }
         }
 
         // 矫正度数+裸眼为0校验
         if ((parseFloat(this.YK_LYSLY) === 0 || parseFloat(this.YK_LYSLZ) === 0) &&
             (parseInt(this.YK_JZDSY) > 400 || parseInt(this.YK_JZDSZ) > 400)) {
-            if (this.TJSXBZ[12] !== '1') pushError(`一眼裸眼为0另一眼矫正度数>400，但TJSXBZ第13位不为1`, this.TJSXBZ);
+            if (this.TJSXBZ[12] !== '1') pushError(`一眼裸眼为0且另一眼矫正度数大于400，但体检受限标志(第13位)不匹配`, this.TJSXBZ);
         }
 
         // 色觉校验
         if (parseInt(this.YK_SJJC) === 2 && !this.TJSXBZ.slice(1, 4).includes("1")) {
-            pushError(`色觉检查异常但TJSXBZ第2-4位未设置`, this.TJSXBZ);
+            pushError(`色觉检查异常，但体检受限标志(第2-4位)未设置`, this.TJSXBZ);
         }
 
         // 血压校验
-        if (this.ss < 80 || this.ss > 160) pushError("收缩压异常", this.ss);
-        if (this.sz < 50 || this.sz > 110) pushError("舒张压异常", this.sz);
+        if (this.ss < 80 || this.ss > 160) pushError("收缩压偏离正常值较大", this.ss);
+        if (this.sz < 50 || this.sz > 110) pushError("舒张压偏离正常值较大", this.sz);
 
         // 身高体重校验
-        if (this.bmi < 14.5 || this.bmi > 40) pushError("BMI异常", this.bmi.toFixed(2) + "身高:" + this.sg + "体重:" + this.tz);
-        if (this.sg < 140 || this.sg > 200) pushError("身高不在正常范围", this.sg);
-        if (this.tz < 40 || this.tz > 120) pushError("体重不在正常范围", this.tz);
+        let minBmi = 14.5, maxBmi = 40;
+        let minSg = 140, maxSg = 200;
+        let minTz = 40, maxTz = 120;
+
+        // 根据性别调整阈值 (1:男, 2:女)
+        if (this.XBDM === '1') {
+            minSg = 145; // 男生身高下限稍高
+            minTz = 45;  // 男生体重下限稍高
+        } else if (this.XBDM === '2') {
+            maxSg = 190; // 女生身高上限稍低
+            maxTz = 100; // 女生体重上限稍低
+        }
+
+        if (this.bmi < minBmi || this.bmi > maxBmi) pushError("BMI指数偏离正常范围", this.bmi.toFixed(2) + " (身高:" + this.sg + ", 体重:" + this.tz + ")");
+        if (this.sg < minSg || this.sg > maxSg) pushError("身高偏离正常值较大", this.sg);
+        if (this.tz < minTz || this.tz > maxTz) pushError("体重偏离正常值过大", this.tz);
 
         // 听力检查
         if ((this.etlL < 3 && this.etlR < 3) || (this.etlL === 5 && this.etlR === 0) || (this.etlR === 5 && this.etlL === 0)) {
-            if (this.TJSXBZ[13] !== '1') pushError("听力异常但TJSXBZ第14位不为1", this.TJSXBZ);
+            if (this.TJSXBZ[13] !== '1') pushError("听力检查异常，但体检受限标志(第14位)不匹配", this.TJSXBZ);
         }
 
         // 嗅觉检查
         if (parseInt(this.EB_XJ) === 2 && this.TJSXBZ[14] !== '1') {
-            pushError("嗅觉异常但TJSXBZ第15位不为1", this.TJSXBZ);
+            pushError("嗅觉检查异常，但体检受限标志(第15位)不匹配", this.TJSXBZ);
         }
 
         // TJSXBZ逻辑校验
         const validFlag = validateTjsxbz(this.TJSXBZ, this.TJYJBZ);
-        if (validFlag !== true) pushError("体检受限标志校验失败，TJSXBZ与TJSXBZ无法对应", validFlag);
+        if (validFlag !== true) pushError("体检受限标志逻辑校验未通过", validFlag);
 
         // TJJLDM 为1时要求 TJSXBZ 第1位为1其余为0
         if (parseInt(this.TJJLDM) === 1) {
             if (this.TJSXBZ[0] !== '1' || this.TJSXBZ.slice(1).includes('1')) {
-                pushError("体检结论为1但TJSXBZ不符合要求（第1位为1，其余为0）", this.TJSXBZ);
+                pushError("体检结论为合格，但体检受限标志不符合规范(应仅第1位为1)", this.TJSXBZ);
             }
         }
     }
