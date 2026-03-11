@@ -202,7 +202,7 @@ const app = createApp({
             const data = this.errorStudents.map(student => {
                 const row = {};
                 this.tableHeaders.forEach(header => {
-                    if (header === '异常信息') {
+                    if (header === '可能存在异常的检查信息') {
                         row[header] = student.errorList.join(', ');
                     } else {
                         row[header] = student[header] || '';
