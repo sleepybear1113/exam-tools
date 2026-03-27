@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>自考考务材料打印</title>
+    <link rel="stylesheet" href="../../lib/bootstrap/5.3.8/bootstrap.min.css">
+    <script src="../../lib/vue/3.5.20/vue.global.prod.js"></script>
+</head>
+<style>
+    #input {
+        margin: 0 auto;
+    }
+
+    table {
+        border-collapse: collapse;
+    }
+
+    #door table {
+        margin: 0 auto;
+    }
+
+    #envelop td {
+        border: 1px solid black;
+        text-align: center;
+        font-family: 宋体, serif;
+        font-size: 12pt;
+    }
+
+    #door td {
+        border: 2px solid black;
+        text-align: center;
+        font-size: 30pt;
+        font-family: 黑体, serif;
+        font-weight: bold;
+    }
+
+    .print-title {
+        text-align: center;
+        font-family: 黑体, serif;
+        font-weight: bold;
+        caption-side: top;
+        color: black;
+        break-after: avoid;
+        page-break-after: avoid;
+    }
+
+    #envelop .print-title {
+        font-size: 12pt;
+    }
+
+    #door .print-title {
+        font-size: 30pt;
+    }
+
+    #envelop > div, #door > div {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    @media print {
+        body > *:not(#qwe) {
+            display: none !important;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        .print {
+            display: block !important;
+        }
+    }
+
+    hr.page-divider {
+        border: 0;
+        border-top: 2px solid #000000;
+        margin: 40px 0;
+    }
+</style>
+<body>
+<div id="qwe">
+    <component :is="'style'" v-if="showTemplate === 'door'">
+        @media print {
+            @page { size: landscape; margin: 1cm; }
+        }
+    </component>
+
+    <div id="input" class="no-print container-fluid py-4">
+        <div class="card shadow-sm mb-4" style="max-width: 1200px; margin: 0 auto;">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">自考考务材料打印</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">考试标题</label>
+                            <input type="text" v-model="title" class="form-control form-control-lg" placeholder="将在打印材料顶部显示">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">数据输入 (从 Excel 粘贴)</label>
+                            <textarea v-model="inputString" class="form-control" style="height: 250px; font-family: monospace; font-size: 0.9rem" placeholder="序号	考点	考试时间	课程代码	课程名称	考场序号	人数..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="col-md-5">
+                        <div class="alert alert-secondary py-3">
+                            <h6 class="alert-heading fw-bold mb-2">使用说明：</h6>
+                            <ul class="small mb-0 ps-3">
+                                <li>左侧输入框请从 Excel 中复制然后粘贴。</li>
+                                <li>保留标题行，必须包含：<strong>序号、考场序号、课程代码、课程名称、考点、人数、考试时间</strong>（、考试时间号，可选）。</li>
+                                <li>程序会自动按【考点 + 考试时间 + 序号】进行分组。</li>
+                                <li>若有多余字段，程序将自动忽略。所以请放心将 Excel 内容全选，而不用只选择上述几列。</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <div class="d-flex gap-2 mb-3">
+                                <button class="btn btn-outline-dark flex-grow-1" @click="showSample">运行样例</button>
+                                <button class="btn btn-primary flex-grow-1" @click="parseSubject">解析数据</button>
+                                <button class="btn btn-success flex-grow-1" onclick="window.print()">
+                                    <i class="bi bi-printer"></i> 立即打印
+                                </button>
+                            </div>
+                            
+                            <div class="card border-info">
+                                <div class="card-header bg-primary text-white py-1 small fw-bold">模板切换</div>
+                                <div class="card-body p-2 text-center">
+                                    <div class="btn-group w-100">
+                                        <button class="btn btn-sm" :class="showTemplate === 'envelop' ? 'btn-primary' : 'btn-outline-dark'" @click="changeTemplate('envelop')">信封模板</button>
+                                        <button class="btn btn-sm" :class="showTemplate === 'door' ? 'btn-primary' : 'btn-outline-dark'" @click="changeTemplate('door')">场贴模板 (横向)</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="envelop001" v-show="showTemplate === 'envelop'" class="no-print">
+            <div class="d-flex justify-content-center align-items-center gap-3 py-2 bg-light border-bottom mb-4">
+                <div class="input-group input-group-sm w-auto">
+                    <span class="input-group-text">左边距</span>
+                    <input type="number" v-model="envelopConfig.left" step="2" class="form-control" style="width: 70px">
+                    <span class="input-group-text">px</span>
+                </div>
+                <div class="input-group input-group-sm w-auto">
+                    <span class="input-group-text">上边距</span>
+                    <input type="number" v-model="envelopConfig.top" step="2" class="form-control" style="width: 70px">
+                    <span class="input-group-text">px</span>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" @click="saveMarginConfig">保存边距设置</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="envelop" v-show="showTemplate === 'envelop'">
+        <template v-for="(subjectGroup, index) in subjectGroupList" :key="index">
+            <div :style="`margin-top: ${envelopConfig.top}px; margin-left: ${envelopConfig.left}px; page-break-after:always; width: 600px;` ">
+                <table :style="`margin-top: -${subjectGroup.subjects.length * 20}px` ">
+                    <caption class="print-title">{{title}}</caption>
+                    <tbody>
+                    <tr>
+                        <td>序号</td>
+                        <td>考场序号</td>
+                        <td>课程代码</td>
+                        <td>课程名称</td>
+                        <td>考点</td>
+                        <td>人数</td>
+                    </tr>
+
+                    <tr v-for="(subject, sIndex) in subjectGroup.subjects" :key="sIndex">
+                        <td style="width: 40px">{{subject.序号}}</td>
+                        <td style="width: 80px">{{subject.考场序号}}</td>
+                        <td style="width: 70px">{{subject.课程代码}}</td>
+                        <td style="width: 200px">{{subject.课程名称}}</td>
+                        <td style="width: 60px">{{subject.考点}}</td>
+                        <td style="width: 40px">{{subject.人数}}</td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="5">{{subjectGroup.考试时间号}}{{subjectGroup.考试时间}}</td>
+                        <td colspan="1">{{subjectGroup.总人数 ? subjectGroup.总人数 : ""}}</td>
+                    </tr>
+
+                    </tbody>
+                </table>
+            </div>
+            <hr class="page-divider no-print" v-if="index < subjectGroupList.length - 1">
+        </template>
+    </div>
+
+    <!-- 场标 -->
+    <div id="door" v-show="showTemplate === 'door'">
+        <template v-for="(subjectGroup, index) in subjectGroupList" :key="index">
+            <div style="margin-top: 50px; page-break-after:always">
+                <table :style="`margin-top: ${-subjectGroup.subjects.length * 35 + 150}px` ">
+                    <caption class="print-title">{{title}}</caption>
+                    <tbody>
+                    <tr>
+                        <td>序号</td>
+                        <td>考场序号</td>
+                        <td>课程<br>代码</td>
+                        <td>课程名称</td>
+                        <td>考点</td>
+                    </tr>
+
+                    <tr v-for="(subject, sIndex) in subjectGroup.subjects" :key="sIndex">
+                        <td style="width: 100px; height: 60px">{{subject.序号}}</td>
+                        <td style="width: 140px">{{subject.考场序号}}</td>
+                        <td style="width: 120px">{{subject.课程代码}}</td>
+                        <td style="width: 400px">{{subject.课程名称}}</td>
+                        <td style="width: 120px">{{subject.考点}}</td>
+                    </tr>
+
+                    <tr v-if="subjectGroup.考试时间">
+                        <td colspan="5">{{subjectGroup.考试时间}}</td>
+                    </tr>
+
+                    </tbody>
+                </table>
+            </div>
+            <hr class="page-divider no-print" v-if="index < subjectGroupList.length - 1">
+        </template>
+    </div>
+</div>
+
+<script>
+    let envelopConfigKey = "envelopConfig-48961";
+    class Subject {
+        constructor(props = {}) {
+            this.id = props.id;
+            this.templateName = props.templateName;
+
+            this.left = props.left;
+            this.top = props.top;
+
+            this.考点 = props.考点 ? props.考点 : "";
+
+            this.序号 = props.序号 ? props.序号 : "";
+            this.考场序号 = props.考场序号 ? props.考场序号 : "";
+            this.课程代码 = props.课程代码 ? props.课程代码 : "";
+            this.课程名称 = props.课程名称 ? props.课程名称 : "";
+            this.考试时间 = props.考试时间 ? props.考试时间 : "";
+            this.考试时间号 = props.考试时间号 ? props.考试时间号 : "";
+            this.人数 = props.人数 ? props.人数 : "";
+        }
+    }
+
+    class SubjectGroup {
+        constructor(props = {}) {
+            this.id = props.id;
+            this.templateName = props.templateName;
+
+            this.left = props.left;
+            this.top = props.top;
+
+            this.考点 = props.考点;
+            this.考试时间号 = props.考试时间号;
+            this.序号 = props.序号;
+            this.考试时间 = props.考试时间;
+            this.总人数 = props.总人数;
+
+            this.subjects = props.subjects ? props.subjects.map(subject => new Subject(subject)) : [];
+        }
+    }
+</script>
+
+<script>
+Vue.createApp({
+    data() {
+        return {
+            subjectGroupList: [],
+            inputString: "",
+            title: `${new Date().getFullYear()}年${new Date().getMonth() < 6 ? '上半年' : '下半年'}高等教育自学考试`,
+            envelopConfig: {
+                left: 410,
+                top: 350,
+            },
+            showTemplate: "envelop",
+        };
+    },
+    created() {
+        this.loadMarginConfig();
+    },
+
+    methods: {
+            changeTemplate(id) {
+                this.showTemplate = id;
+            },
+            saveMarginConfig() {
+                localStorage.setItem(envelopConfigKey, JSON.stringify(this.envelopConfig));
+            },
+            loadMarginConfig() {
+                let config = localStorage.getItem(envelopConfigKey);
+                if (config) {
+                    this.envelopConfig = JSON.parse(config);
+                }
+            },
+            parseSubject() {
+                if (!this.inputString) {
+                    return;
+                }
+
+                let lines = this.inputString.split('\n');
+                let firstLine = lines[0];
+                let cols = firstLine.split('\t');
+                let indexObj = {};
+                for (let i = 0; i < cols.length; i++) {
+                    let col = cols[i].replace(/\s/g, '')
+                    if (col === "序号") {
+                        indexObj.序号 = i;
+                    } else if (col === "试场号") {
+					indexObj.序号 = i;
+					} else if (col === "考场序号") {
+                        indexObj.考场序号 = i;
+                    } else if (col === "课程代码") {
+                        indexObj.课程代码 = i;
+                    } else if (col === "课程名称") {
+                        indexObj.课程名称 = i;
+                    } else if (col === "考点") {
+                        indexObj.考点 = i;
+                    } else if (col === "人数") {
+                        indexObj.人数 = i;
+                    } else if (col === "考试时间" || col === "时间") {
+                        indexObj.考试时间 = i;
+                    } else if (col === "考试时间号" || col === "时间号") {
+                        indexObj.考试时间号 = i;
+                    }
+                }
+
+                let subjects = [];
+                for (let i = 1; i < lines.length; i++) {
+                    let string = lines[i];
+                    if (string.replace(/\s/g, '') === "") {
+                        continue;
+                    }
+                    let parts = string.split('\t');
+                    let subject = {
+                        序号: parts[indexObj.序号],
+                        考点: parts[indexObj.考点],
+                        考场序号: parts[indexObj.考场序号],
+                        课程代码: parts[indexObj.课程代码],
+                        课程名称: parts[indexObj.课程名称],
+                        考试时间: parts[indexObj.考试时间],
+                        考试时间号: parts[indexObj.考试时间号],
+                        人数: parts[indexObj.人数],
+                    };
+                    subjects.push(new Subject(subject));
+                }
+
+                let subjectGroupMap = {};
+                let subjectGroupMapList = [];
+
+                for (let subject of subjects) {
+                    let key = `${subject.考试时间}_${subject.考点}_${subject.序号}`;
+                    if (!subjectGroupMap[key]) {
+                        let subjectGroup = new SubjectGroup({
+                            考试时间号: subject.考试时间号,
+                            考点: subject.考点,
+                            考试时间: subject.考试时间,
+                            序号: subject.序号,
+                            总人数: 0,
+                        });
+                        subjectGroupMap[key] = subjectGroup;
+                        subjectGroupMapList.push(subjectGroup);
+                    }
+                    subjectGroupMap[key].总人数 += parseInt(subject.人数);
+                    subjectGroupMap[key].subjects.push(subject);
+                }
+                console.log(subjectGroupMapList);
+                this.subjectGroupList = subjectGroupMapList;
+            },
+            showSample() {
+                this.inputString = `序号\t考点\t考试时间\t考试时间号\t课程代码\t课程名称\t考场序号\t人数\t备注
+14\t技师\t4月14日下午14：30-17：00\t④\t00015\t英语(二)\t04010331\t17\t
+14\t技师\t4月14日下午14：30-17：00\t④\t00071\t社会保障概论\t04010339\t3\t小
+14\t技师\t4月14日下午14：30-17：00\t④\t00144\t企业管理概论\t04010342\t10\t
+15\t技师\t4月14日下午14：30-17：00\t④\t00144\t企业管理概论\t04010341\t30\t
+16\t技师\t4月14日下午14：30-17：00\t④\t00034\t社会学概论\t04010332\t30\t
+17\t技师\t4月14日下午14：30-17：00\t④\t00034\t社会学概论\t04010333\t30\t
+18\t技师\t4月14日下午14：30-17：00\t④\t00012\t英语(一)\t04010317\t1\t小
+18\t技师\t4月14日下午14：30-17：00\t④\t00034\t社会学概论\t04010334\t26\t
+18\t技师\t4月14日下午14：30-17：00\t④\t00183\t消费经济学\t04010357\t1\t小
+1\t秀水\t4月14日下午14：30-17：00\t④\t00043\t经济法概论(财经类)\t04010335\t30\t
+2\t秀水\t4月14日下午14：30-17：00\t④\t00043\t经济法概论(财经类)\t04010336\t27\t
+2\t秀水\t4月14日下午14：30-17：00\t④\t00431\t教学设计\t04010363\t1\t小
+2\t秀水\t4月14日下午14：30-17：00\t④\t00612\t日本文学选读\t04010378\t1\t小
+3\t秀水\t4月14日下午14：30-17：00\t④\t00158\t资产评估\t04010349\t30\t
+4\t秀水\t4月14日下午14：30-17：00\t④\t00158\t资产评估\t04010350\t30\t
+5\t秀水\t4月14日下午14：30-17：00\t④\t00158\t资产评估\t04010351\t30\t
+6\t秀水\t4月14日下午14：30-17：00\t④\t00158\t资产评估\t04010352\t30\t
+7\t秀水\t4月14日下午14：30-17：00\t④\t00158\t资产评估\t04010353\t30\t
+8\t秀水\t4月14日下午14：30-17：00\t④\t00158\t资产评估\t04010354\t30\t
+9\t秀水\t4月14日下午14：30-17：00\t④\t00098\t国际市场营销学\t04010340\t5\t小
+9\t秀水\t4月14日下午14：30-17：00\t④\t00158\t资产评估\t04010355\t10\t
+9\t秀水\t4月14日下午14：30-17：00\t④\t00389\t学前教育科学研究\t04010361\t12\t
+55\t技师\t4月13日上午9：00-11：30\t①\t03709\t马克思主义基本原理概论\t04010079\t30\t
+56\t技师\t4月13日上午9：00-11：30\t①\t03709\t马克思主义基本原理概论\t04010080\t30\t
+57\t技师\t4月13日上午9：00-11：30\t①\t03709\t马克思主义基本原理概论\t04010081\t30\t
+58\t技师\t4月13日上午9：00-11：30\t①\t03709\t马克思主义基本原理概论\t04010082\t30\t
+59\t技师\t4月13日上午9：00-11：30\t①\t03709\t马克思主义基本原理概论\t04010083\t30\t
+1\t秀水\t4月13日上午9：00-11：30\t①\t00031\t心理学\t04010001\t16\t
+1\t秀水\t4月13日上午9：00-11：30\t①\t00097\t外贸英语写作\t04010019\t3\t小
+1\t秀水\t4月13日上午9：00-11：30\t①\t00165\t劳动就业概论\t04010028\t1\t小
+2\t秀水\t4月13日上午9：00-11：30\t①\t00185\t商品流通概论\t04010029\t1\t小
+2\t秀水\t4月13日上午9：00-11：30\t①\t00249\t国际私法\t04010030\t16\t
+2\t秀水\t4月13日上午9：00-11：30\t①\t00264\t中国法律思想史\t04010031\t7\t
+3\t秀水\t4月13日上午9：00-11：30\t①\t00540\t外国文学史\t04010044\t30\t
+`;
+                this.parseSubject();
+            },
+        },
+    }).mount('#qwe');
+
+</script>
+</body>
+</html>
