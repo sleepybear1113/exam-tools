@@ -29,7 +29,7 @@ table.table td, table.table th {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	z-index: 2000;
+	z-index: 9999;
 }
 
 .loading-overlay.d-none {
@@ -38,6 +38,47 @@ table.table td, table.table th {
 
 .loading-content {
 	text-align: center;
+}
+
+.table-responsive {
+    overflow: visible !important;
+}
+
+.column-filter {
+    cursor: pointer;
+    margin-left: 4px;
+    font-size: 0.8em;
+}
+
+.bmd-filter-menu {
+    min-width: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.bmd-filter-item {
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+}
+
+.bmd-checkbox {
+    margin: 0 !important;
+    flex-shrink: 0;
+}
+
+.bmd-filter-item .form-check-label {
+    margin-left: 8px;
+    cursor: pointer;
+    user-select: none;
+    line-height: 1.2;
+}
+
+.bmd-filter-actions {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
 }
 
 
