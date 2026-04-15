@@ -32,6 +32,9 @@ let vm = createApp({
 
         const picShown = ref(true);
         const hideIdCard = ref(false);
+        const hideType = ref(false);
+        const deskLabelBorderMode = ref("horizontal");
+        const deskLabelGap = ref(25);
         const examNotice = ref("");
 
         // 准考证排序相关变量
@@ -979,6 +982,9 @@ let vm = createApp({
             picShown,
             switchPicShown,
             hideIdCard,
+            hideType,
+            deskLabelBorderMode,
+            deskLabelGap,
             examNotice,
             messages,
             messagesText,

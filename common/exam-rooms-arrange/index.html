@@ -271,6 +271,27 @@
         <div v-if="tab === '桌贴'">
             <div class="no-print">
                 <h3 class="middle">桌贴</h3>
+                <div class="checklist-controls">
+                    <label class="checklist-option">
+                        <input type="checkbox" v-model="hideType">
+                        隐藏类别
+                    </label>
+                    <label class="checklist-option">
+                        <span>边框模式：</span>
+                        <select v-model="deskLabelBorderMode">
+                            <option value="all">全部边框</option>
+                            <option value="vertical">仅竖向</option>
+                            <option value="horizontal">仅横向</option>
+                            <option value="none">无</option>
+                        </select>
+                    </label>
+                    <div class="checklist-option">
+                        <span>行间距调节：</span>
+                        <button @click="deskLabelGap = Math.max(0, deskLabelGap - 1)" style="padding: 2px 8px; margin: 0 5px;">-</button>
+                        <span>{{ deskLabelGap }}</span>
+                        <button @click="deskLabelGap = deskLabelGap + 1" style="padding: 2px 8px; margin: 0 5px;">+</button>
+                    </div>
+                </div>
             </div>
 
             <!-- 桌贴内容 -->
@@ -297,31 +318,36 @@
                 </div>
 
                 <!-- 桌贴列表 -->
-                <div class="desk-labels-container">
+                <div class="desk-labels-container" :data-border-mode="deskLabelBorderMode" :style="{'--desk-label-row-gap': deskLabelGap + 'px'}">
                     <div v-for="(column, columnIndex) in page.columns"
                          :key="`desk-column-${page.room.id}-${page.pageIndex}-${columnIndex}`"
                          class="desk-label-column">
                         <div v-for="student in column" :key="student.ksh" class="desk-label-item">
-                            <!-- 左侧信息 -->
-                            <div class="desk-label-left">
-                                <div class="desk-label-info-item">
-                                    <div class="desk-label-info-label">姓名：{{ student.name }}</div>
-                                    <div class="desk-label-info-value">准考证号：{{ student.ksh }}</div>
-                                </div>
-                                <div class="desk-label-info-item">
-                                    <div class="desk-label-info-value">类别：{{ page.room.typeId + " " + page.room.typeName }}</div>
-                                </div>
-
-                                <div class="desk-label-info-item">
-                                    <div class="desk-label-info-label">考场号：{{ page.room.roomName }}</div>
-                                </div>
+                            <!-- 顶部信息：姓名和准考证号 -->
+                            <div class="desk-label-top">
+                                <div class="desk-label-info-label">{{ student.name }}</div>
+                                <div class="desk-label-info-value">{{ student.ksh }}</div>
                             </div>
 
-                            <!-- 右侧座位信息 -->
-                            <div class="desk-label-right">
-                                <div class="desk-label-room">
-                                    <span class="desk-label-seat-label">座位号&nbsp;&nbsp;</span>
-                                    <span class="desk-label-seat">{{ student.seatNo }}</span>
+                            <!-- 底部区域 -->
+                            <div class="desk-label-bottom">
+                                <!-- 左侧信息：类别和考场号 -->
+                                <div class="desk-label-left">
+                                    <div class="desk-label-info-item">
+                                        <div class="desk-label-info-value"><span v-if="!hideType">类别：</span>{{ page.room.typeName }}</div>
+                                    </div>
+
+                                    <div class="desk-label-info-item">
+                                        <div class="desk-label-info-label">考场号：{{ page.room.roomName }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- 右侧座位信息 -->
+                                <div class="desk-label-right">
+                                    <div class="desk-label-room">
+                                        <span class="desk-label-seat-label">座位号&nbsp;&nbsp;</span>
+                                        <span class="desk-label-seat">{{ student.seatNo }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

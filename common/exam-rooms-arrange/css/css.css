@@ -166,6 +166,15 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
     padding: 4px 8px;
 }
 
+.checklist-option select {
+    font-size: 12px;
+    padding: 2px 6px;
+    border: 1px solid rgba(102, 126, 234, 0.35);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #2c3e50;
+}
+
 .ticket-container {
     width: 210mm;
     min-height: 297mm;
@@ -366,18 +375,25 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
 
 /* 桌贴列表容器 */
 .desk-labels-container {
+    --desk-label-column-gap: 10px;
+    --desk-label-row-gap: 10px;
     margin-top: 15px;
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--desk-label-column-gap, 10px);
+    row-gap: 0;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: start;
 }
 
 .desk-label-column {
-    flex: 1;
+    width: 100%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    row-gap: var(--desk-label-row-gap, 10px);
+    position: relative;
 }
 
 /* 单个桌贴 */
@@ -385,20 +401,115 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
     border: 1px solid #333;
     background: white;
     display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 6px;
+    min-width: 0;
+    overflow: hidden; /* 防止内容溢出破坏三栏等宽布局 */
+    position: relative;
+}
+
+.desk-labels-container[data-border-mode="all"] .desk-label-item {
+    border: 1px solid #333;
+}
+
+.desk-labels-container[data-border-mode="all"] .desk-label-column {
+    border: none;
+}
+
+.desk-labels-container[data-border-mode="all"] .desk-label-column::after,
+.desk-labels-container[data-border-mode="all"] .desk-label-item::before {
+    content: none;
+}
+
+.desk-labels-container[data-border-mode="vertical"] .desk-label-item {
+    border: none;
+}
+
+.desk-labels-container[data-border-mode="vertical"] .desk-label-column {
+    border: none;
+}
+
+.desk-labels-container[data-border-mode="vertical"] .desk-label-item::before {
+    content: none;
+}
+
+.desk-labels-container[data-border-mode="vertical"] .desk-label-column:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: calc(var(--desk-label-column-gap, 10px) / -2);
+    border-right: 1px solid #333;
+}
+
+.desk-labels-container[data-border-mode="horizontal"] .desk-label-item {
+    border: none;
+    overflow: visible;
+}
+
+.desk-labels-container[data-border-mode="horizontal"] .desk-label-column {
+    border: none;
+}
+
+.desk-labels-container[data-border-mode="horizontal"] .desk-label-column::after {
+    content: none;
+}
+
+.desk-labels-container[data-border-mode="horizontal"] .desk-label-item + .desk-label-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--desk-label-row-gap, 10px) / -2);
+    border-top: 1px solid #333;
+}
+
+.desk-labels-container[data-border-mode="none"] .desk-label-item {
+    border: none;
+}
+
+.desk-labels-container[data-border-mode="none"] .desk-label-column {
+    border: none;
+}
+
+.desk-labels-container[data-border-mode="none"] .desk-label-column::after,
+.desk-labels-container[data-border-mode="none"] .desk-label-item::before {
+    content: none;
+}
+
+/* 桌贴顶部信息 */
+.desk-label-top {
+    display: flex;
     justify-content: space-between;
     align-items: center;
-    box-sizing: border-box;
-    padding: 6px 8px;
-    margin: 5px;
+    gap: 4px;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 2px;
+    margin-bottom: 3px;
+    width: 100%;
+    min-width: 0;
+}
+
+/* 桌贴底部区域 */
+.desk-label-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2px;
+    width: 100%;
+    min-width: 0;
 }
 
 /* 桌贴左侧信息 */
 .desk-label-left {
-    flex: 1;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 4px;
+    gap: 1px;
+    min-width: 0;
 }
 
 .desk-label-info-item {
@@ -406,21 +517,36 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
     flex-direction: column;
     align-items: flex-start;
     min-width: 0;
-    line-height: 1;
+    line-height: 0.95;
+}
+
+.desk-label-left .desk-label-info-item:first-child {
+    justify-content: flex-start;
+    min-height: 2.2em;
+}
+
+.desk-label-left .desk-label-info-item:first-child .desk-label-info-value {
+    line-height: 1.1;
+    min-height: 2.2em;
 }
 
 .desk-label-info-label {
     font-weight: bold;
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 2px;
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 1px;
+    line-height: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .desk-label-info-value {
-    color: #333;
+    color: #000;
     font-family: monospace;
-    font-size: 14px;
+    font-size: 15px;
     text-align: left;
+    line-height: 1;
+    min-width: 0;
     word-break: break-all;
 }
 
@@ -430,25 +556,40 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    flex: 0 0 70px;
+    width: 70px;
     min-width: 70px;
-    gap: 2px;
+    gap: 1px;
+}
+
+.desk-label-top > *,
+.desk-label-bottom > * {
+    min-width: 0;
 }
 
 .desk-label-seat-label {
-    justify-content: center;
-    align-items: center;
-    gap: 2px;
+    display: inline-block;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    line-height: 0.95;
 }
 
 .desk-label-seat {
     font-size: 26px;
     font-weight: bold;
     color: #000000;
+    line-height: 0.95;
 }
 
 .desk-label-room {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 1px;
     font-size: 12px;
     color: #666;
+    white-space: nowrap;
+    line-height: 0.95;
 }
 
 /* 打印时的桌贴样式优化 */
@@ -466,10 +607,6 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
     
     .desk-label-item {
         page-break-inside: avoid;
-    }
-    
-    .desk-label-item:nth-child(20n) {
-        margin-bottom: 10px;
     }
 }
 
