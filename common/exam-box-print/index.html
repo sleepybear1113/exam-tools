@@ -4,63 +4,139 @@
     <meta charset="UTF-8">
     <title>答题卡装箱单生成工具</title>
     <link rel="stylesheet" href="./index.css">
+    <script src="../../lib/QRCode/1.0.0/qrcode.js"></script>
 </head>
 <body>
-<div class="main-container">
-    <div class="input-container">
-        <div class="html-title">
-            答题卡装箱单生成工具
-        </div>
-        <div>
-            <label for="region">地区：</label>
-            <input type="text" class="input-field-region" id="region" value="嘉兴市/市本级">
-        </div>
-        <div class="radio-group">
-            <label>单页重复显示：</label>
-            <label>
-                <input type="radio" name="duplicate" value="0"> 否
-            </label>
-            <label>
-                <input type="radio" name="duplicate" value="1" checked> 是
-            </label>
-            <span>(即A4纸上下半页是否重复相同)</span>
-        </div>
-        <div class="subject-count-row">
-            <label for="subjectCount">科目数量：</label>
-            <select id="subjectCount" class="input-field">
-                <!-- 1-20的选项将由JavaScript生成 -->
-            </select>
-        </div>
-        <div class="subject-inputs-container">
-            <div id="subjectInputs">
-                <!-- 所有20个输入框将在页面加载时生成 -->
+<div id="app">
+    <div class="main-container">
+        <div class="input-container">
+            <div class="html-title">
+                答题卡装箱单生成工具
             </div>
-        </div>
-        <div class="button-group">
-            <button onclick="toggleManualInput()" id="toggleBtn">手动输入</button>
-            <button onclick="generateLabels()">生成标签</button>
-        </div>
-        <div class="manual-input-area" id="manualInputArea">
-            <label for="subjectData"></label>
-            <textarea id="subjectData"></textarea>
             <div>
-                <button onclick="fillSampleData()">样例填充</button>
-                <button onclick="parseSubjectData()">识别</button>
+                <label for="region">地区：</label>
+                <input type="text" class="input-field-region" id="region" v-model.trim="region">
+                <label>
+                    <input type="checkbox" v-model="showRightInfo"> 显示箱号/总袋数
+                </label>
             </div>
+            <div class="radio-group">
+                <label>单页重复显示：</label>
+                <label>
+                    <input type="radio" name="duplicate" value="0" v-model="duplicate"> 否
+                </label>
+                <label>
+                    <input type="radio" name="duplicate" value="1" v-model="duplicate"> 是
+                </label>
+                <span>(即A4纸上下半页是否重复相同)</span>
+            </div>
+            <div class="subject-count-row">
+                <label for="subjectCount">科目数量：</label>
+                <select id="subjectCount" class="input-field" v-model.number="subjectCount">
+                    <option v-for="count in subjectOptions" :key="count" :value="count">{{ count }}</option>
+                </select>
+            </div>
+            <div class="qr-config-row">
+                <label>
+                    <input type="checkbox" id="enableQR" v-model="enableQR"> 启用二维码
+                </label>
+                
+                <label for="qrPrefix">前缀：</label>
+                <input type="text" id="qrPrefix" class="input-field-qr" v-model.trim="qrPrefix" placeholder="例如: GZ">
+                <label for="qrStart">起始号：</label>
+                <input type="text" id="qrStart" class="input-field-qr" v-model.trim="qrStart" placeholder="0003">
+                <label for="qrEnd">结束号：</label>
+                <input type="text" id="qrEnd" class="input-field-qr" v-model.trim="qrEnd" placeholder="0088">
+            </div>
+            <div class="subject-inputs-container">
+                <div id="subjectInputs">
+                    <div
+                        v-for="(subject, index) in subjects"
+                        :key="index"
+                        class="subject-row"
+                        :class="{ visible: index < subjectCount }"
+                    >
+                        <div class="subject-inputs">
+                            <label :for="`subjectType${index + 1}`">科目{{ index + 1 }}名称</label>
+                            <input type="text" class="input-field" :id="`subjectType${index + 1}`" v-model.trim="subject.type">
+
+                            <label :for="`totalBags${index + 1}`">袋数总计</label>
+                            <input type="number" class="input-field" :id="`totalBags${index + 1}`" min="1" v-model="subject.totalBags">
+
+                            <label :for="`bagsPerBox${index + 1}`">每箱袋数</label>
+                            <input type="number" class="input-field" :id="`bagsPerBox${index + 1}`" min="1" v-model="subject.bagsPerBox">
+
+                            <label :for="`maxExtraBags${index + 1}`">尾箱超限袋数</label>
+                            <input type="number" class="input-field" :id="`maxExtraBags${index + 1}`" min="0" v-model="subject.maxExtraBags">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button type="button" @click="toggleManualInput" id="toggleBtn">{{ manualInputVisible ? '隐藏输入' : '手动输入' }}</button>
+                <button type="button" @click="generateLabels">生成标签</button>
+            </div>
+            <div class="manual-input-area" id="manualInputArea" :class="{ visible: manualInputVisible }">
+                <label for="subjectData"></label>
+                <textarea id="subjectData" v-model="manualText" :placeholder="subjectDataPlaceholder"></textarea>
+                <div>
+                    <button type="button" @click="fillSampleData">样例填充</button>
+                    <button type="button" @click="parseSubjectData">识别</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <div class="print-section">
+            <button type="button" @click="printLabels">打印</button>
         </div>
     </div>
 
-    <div class="separator"></div>
-
-    <div class="print-section">
-        <button onclick="window.print()">打印</button>
+    <div class="print-area page-counter" id="printArea" contenteditable="true">
+        <div v-for="(page, pageIndex) in pages" :key="`page-${pageIndex}`" class="page">
+            <div v-for="(box, boxIndex) in page" :key="`${box.key}-${pageIndex}-${boxIndex}`" class="box-container">
+                <div class="box">
+                    <div class="box-top-row-1">
+                        <div v-if="box.showRightInfo" class="region">{{ box.region }}</div>
+                        <div v-else class="region region-placeholder" aria-hidden="true">{{ box.region }}</div>
+                    </div>
+                    <div class="box-top-row-2">
+                        <div class="bags-in-box-container">
+                            <div class="bags-in-box">
+                                <span class="box-label">本箱袋数</span>
+                                <span class="box-number-content">{{ box.count }}</span>
+                            </div>
+                            <div v-if="box.qrData" class="qr-code-container">
+                                <div class="qr-code" v-qrcode="box.qrData"></div>
+                                <div class="qr-text">{{ box.qrData }}</div>
+                            </div>
+                        </div>
+                        <div v-if="box.showRightInfo" class="box-info-right">
+                            <div class="box-number-item">
+                                <span class="box-label">箱号</span>
+                                <span class="box-number-content">{{ box.boxNumber }}</span>
+                            </div>
+                            <div class="total-bags-item">
+                                <span class="box-label">总袋数</span>
+                                <span class="box-number-content">{{ box.cumulativeBags }}/{{ box.totalBags }}</span>
+                            </div>
+                        </div>
+                        <div v-else class="box-info-right region-only">
+                            <div class="box-number-item region-box-number-item">
+                                <div class="region region-in-box">{{ box.region }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subject-type" :class="box.fontSizeClass">{{ box.type }}</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="print-area page-counter" id="printArea" contenteditable="true">
-    <!-- 这里的内容会由 JavaScript 动态生成 -->
-</div>
-
+<script src="../../lib/vue/3.5.20/vue.global.prod.js"></script>
 <script src="index.js"></script>
+
 </body>
 </html>

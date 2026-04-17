@@ -1,282 +1,67 @@
-// 初始化时生成所有20个输入框
-function initializeSubjectInputs() {
-    const container = document.getElementById('subjectInputs');
-    container.innerHTML = '';
+const { createApp, ref, computed, watch, onBeforeUnmount } = Vue;
 
-    for (let i = 1; i <= 20; i++) {
-        const subjectDiv = document.createElement('div');
-        subjectDiv.className = 'subject-row';
-        subjectDiv.innerHTML = `
-                    <div class="subject-inputs">
-                        <label for="subjectType${i}">科目${i}名称</label>
-                        <input type="text" class="input-field" id="subjectType${i}">
+const MAX_SUBJECTS = 20;
+const PREVIEW_DEBOUNCE_MS = 300;
+const DEFAULT_REGION = '嘉兴市/市本级';
+const DEFAULT_DUPLICATE = '1';
+const SUBJECT_DATA_PLACEHOLDER = '每行一个科目，数据用空格分隔。\n格式：科目名称 袋数总计 每箱袋数 尾箱超限袋数\n示例：\nCET4     191    60    10\n学考语文 122    30    3\n兼容Excel。可以在Excel中将科目的4列数据填写后，将数据复制到本输入框（不要复制标题）';
+const SAMPLE_DATA = 'CET4\t191\t60\t10\nCET6\t122\t30\t5\n学考语文\t88\t40\t8\n日语\t156\t50\t10\n13000英语专升本\t95\t35\t5';
 
-                        <label for="totalBags${i}">袋数总计</label>
-                        <input type="number" class="input-field" id="totalBags${i}" min="1">
-
-                        <label for="bagsPerBox${i}">每箱袋数</label>
-                        <input type="number" class="input-field" id="bagsPerBox${i}" min="1">
-
-                        <label for="maxExtraBags${i}">尾箱超限袋数</label>
-                        <input type="number" class="input-field" id="maxExtraBags${i}" value="0">
-                    </div>
-                `;
-        container.appendChild(subjectDiv);
-    }
-
-    updateVisibleInputs();
+function createEmptySubject() {
+    return {
+        type: '',
+        totalBags: '',
+        bagsPerBox: '',
+        maxExtraBags: '0'
+    };
 }
 
-// 更新显示的输入框数量
-function updateVisibleInputs() {
-    const count = parseInt(document.getElementById('subjectCount').value);
-    const rows = document.getElementsByClassName('subject-row');
-
-    // 更新每行的显示状态
-    for (let i = 0; i < rows.length; i++) {
-        if (i < count) {
-            rows[i].classList.add('visible');
-        } else {
-            rows[i].classList.remove('visible');
-        }
-    }
+function createSubjectList() {
+    return Array.from({ length: MAX_SUBJECTS }, createEmptySubject);
 }
 
-// 页面加载时初始化
-window.onload = function () {
-    // 初始化选择器
-    const select = document.getElementById('subjectCount');
-    for (let i = 1; i <= 20; i++) {
-        const option = document.createElement('option');
-        let s = String(i);
-        option.value = s;
-        option.textContent = s;
-        select.appendChild(option);
-    }
-
-    // 初始化所有输入框
-    initializeSubjectInputs();
-
-    let subjectDataPlaceholder="每行一个科目，数据用空格分隔。\n格式：科目名称 袋数总计 每箱袋数 尾箱超限袋数\n示例：\nCET4     191    60    10\n学考语文 122    30    3\n兼容Excel。可以在Excel中将科目的4列数据填写后，将数据复制到本输入框（不要复制标题）"
-    document.getElementById('subjectData').placeholder = subjectDataPlaceholder + "";
-
-    // 添加事件监听器
-    addEventListeners();
+function toPositiveInt(value) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
 
-// 添加事件监听器函数
-function addEventListeners() {
-    // 监听地区输入框变化
-    const regionInput = document.getElementById('region');
-    regionInput.addEventListener('input', function() {
-        // 使用防抖，避免频繁触发
-        clearTimeout(this.debounceTimer);
-        this.debounceTimer = setTimeout(() => {
-            if (hasValidSubjects()) {
-                generateLabels();
-            }
-        }, 500);
-    });
-
-    // 监听单页重复显示单选按钮变化
-    const duplicateRadios = document.querySelectorAll('input[name="duplicate"]');
-    duplicateRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (hasValidSubjects()) {
-                generateLabels();
-            }
-        });
-    });
-
-    // 监听科目数量变化
-    const subjectCountSelect = document.getElementById('subjectCount');
-    subjectCountSelect.addEventListener('change', function() {
-        updateVisibleInputs();
-        // 延迟一点时间让输入框更新完成
-        setTimeout(() => {
-            if (hasValidSubjects()) {
-                generateLabels();
-            }
-        }, 100);
-    });
-
-    // 监听科目输入框变化
-    for (let i = 1; i <= 20; i++) {
-        const subjectTypeInput = document.getElementById(`subjectType${i}`);
-        const totalBagsInput = document.getElementById(`totalBags${i}`);
-        const bagsPerBoxInput = document.getElementById(`bagsPerBox${i}`);
-        const maxExtraBagsInput = document.getElementById(`maxExtraBags${i}`);
-
-        // 为每个输入框添加监听器
-        [subjectTypeInput, totalBagsInput, bagsPerBoxInput, maxExtraBagsInput].forEach(input => {
-            input.addEventListener('input', function() {
-                // 使用防抖，避免频繁触发
-                clearTimeout(this.debounceTimer);
-                this.debounceTimer = setTimeout(() => {
-                    if (hasValidSubjects()) {
-                        generateLabels();
-                    }
-                }, 500);
-            });
-        });
-    }
+function toNonNegativeInt(value) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 }
 
-// 检查是否有有效的科目数据
-function hasValidSubjects() {
-    const visibleSubjectCount = parseInt(document.getElementById('subjectCount').value) || 0;
-    
-    for (let i = 1; i <= visibleSubjectCount; i++) {
-        const subjectType = document.getElementById(`subjectType${i}`).value;
-        const totalBags = parseInt(document.getElementById(`totalBags${i}`).value) || 0;
-        const bagsPerBox = parseInt(document.getElementById(`bagsPerBox${i}`).value) || 0;
-
-        if (subjectType && totalBags > 0 && bagsPerBox > 0) {
-            return true;
-        }
+function getFontSizeClass(type) {
+    if (type.length > 12) {
+        return 'font-shrink-3';
     }
-    return false;
+    if (type.length > 8) {
+        return 'font-shrink-2';
+    }
+    return '';
 }
 
-// generateLabels 函数修改
-function generateLabels() {
-    const region = document.getElementById('region').value || '地区名称';
-    const printArea = document.getElementById('printArea');
-    const isDuplicate = document.querySelector('input[name="duplicate"]:checked').value === "1";
-    printArea.innerHTML = '';
-
-    // 重置页面计数器
-    printArea.style.counterReset = 'page-counter';
-
-    let boxes = [];
-
-    // 获取当前显示的科目数量
-    const visibleSubjectCount = parseInt(document.getElementById('subjectCount').value) || 0;
-
-    // 只处理可见的科目（前N个）
-    for (let i = 1; i <= visibleSubjectCount; i++) {
-        const subjectType = document.getElementById(`subjectType${i}`).value;
-        const totalBags = parseInt(document.getElementById(`totalBags${i}`).value) || 0;
-        const bagsPerBox = parseInt(document.getElementById(`bagsPerBox${i}`).value) || 0;
-        const maxExtraBags = parseInt(document.getElementById(`maxExtraBags${i}`).value) || 0;
-
-        if (subjectType && totalBags > 0 && bagsPerBox > 0) {
-            let boxCounts = calculateBoxCounts(totalBags, bagsPerBox, maxExtraBags);
-            let cumulativeBags = 0;
-
-            boxCounts.forEach((count, index) => {
-                cumulativeBags += count;
-                boxes.push(createBox({
-                    region: region,
-                    boxNumber: `${index + 1}/${boxCounts.length}`,
-                    count: count,
-                    type: subjectType,
-                    totalBags: totalBags,
-                    cumulativeBags: cumulativeBags
-                }));
-            });
-        }
-    }
-
-    let htmlElements = [];
-    // 分页显示标签
-    if (isDuplicate) {
-        // 重复显示模式：每页显示相同的内容
-        for (let i = 0; i < boxes.length; i++) {
-            const page = document.createElement('div');
-            page.className = 'page';
-
-            // 上半部分
-            const container1 = document.createElement('div');
-            container1.className = 'box-container';
-            container1.appendChild(boxes[i].cloneNode(true));
-            page.appendChild(container1);
-
-            // 下半部分（复制上半部分）
-            const container2 = document.createElement('div');
-            container2.className = 'box-container';
-            container2.appendChild(boxes[i].cloneNode(true));
-            page.appendChild(container2);
-
-            htmlElements.push(page);
-        }
-    } else {
-        // 原有的显示模式：每页显示两个不同的标签
-        for (let i = 0; i < boxes.length; i += 2) {
-            const page = document.createElement('div');
-            page.className = 'page';
-
-            const container1 = document.createElement('div');
-            container1.className = 'box-container';
-            container1.appendChild(boxes[i]);
-            page.appendChild(container1);
-
-            if (i + 1 < boxes.length) {
-                const container2 = document.createElement('div');
-                container2.className = 'box-container';
-                container2.appendChild(boxes[i + 1]);
-                page.appendChild(container2);
-            }
-
-            htmlElements.push(page);
-        }
-    }
-
-    setTimeout(() => htmlElements.forEach(e => printArea.appendChild(e)), 50);
-}
-
-function createBox({region, boxNumber, count, type, totalBags, cumulativeBags}) {
-    const box = document.createElement('div');
-    box.className = 'box';
-
-    box.innerHTML = `
-                <div class="region">${region}</div>
-                <div class="box-number">
-                    <div class="box-number-row">
-                        <span class="box-label">箱号</span>
-                        <span class="box-number-content">${boxNumber}</span>
-                    </div>
-                    <div class="divider"></div>
-                    <div class="box-number-row">
-                        <span class="box-label">本箱袋数</span>
-                        <span class="box-number-content">${count}</span>
-                    </div>
-                    <div class="divider"></div>
-                    <div class="box-number-row">
-                        <span class="box-label">袋数</span>
-                        <span class="box-number-content">${cumulativeBags}/${totalBags}</span>
-                    </div>
-                </div>
-                <div class="subject-type">${type}</div>
-            `;
-    return box;
-}
-
-// 新增计算箱数的函数
 function calculateBoxCounts(totalBags, bagsPerBox, maxExtraBags) {
-    let boxCounts = [];
-    let remainingBags = totalBags;
+    if (totalBags <= 0 || bagsPerBox <= 0) {
+        return [];
+    }
 
-    // 如果总数小于等于每箱袋数，直接返回一箱
     if (totalBags <= bagsPerBox) {
         return [totalBags];
     }
 
-    // 先计算完整的箱子
+    const boxCounts = [];
+    let remainingBags = totalBags;
+
     while (remainingBags > bagsPerBox) {
         boxCounts.push(bagsPerBox);
         remainingBags -= bagsPerBox;
     }
 
-    // 处理最后的不完整箱
     if (remainingBags > 0) {
-        // 检查是否需要合并最后两箱
-        if (boxCounts.length > 0 &&
-            (remainingBags + bagsPerBox) <= (bagsPerBox + maxExtraBags)) {
-            // 合并最后两箱
+        const canMergeLastBox = boxCounts.length > 0 && remainingBags <= maxExtraBags;
+        if (canMergeLastBox) {
             boxCounts[boxCounts.length - 1] += remainingBags;
         } else {
-            // 添加新的一箱
             boxCounts.push(remainingBags);
         }
     }
@@ -284,81 +69,319 @@ function calculateBoxCounts(totalBags, bagsPerBox, maxExtraBags) {
     return boxCounts;
 }
 
-// 切换手动输入区域的显示/隐藏
-function toggleManualInput() {
-    const area = document.getElementById('manualInputArea');
-    const btn = document.getElementById('toggleBtn');
-    const isVisible = area.classList.contains('visible');
-
-    if (isVisible) {
-        area.classList.remove('visible');
-        btn.textContent = '手动输入';
-    } else {
-        area.classList.add('visible');
-        btn.textContent = '隐藏输入';
+function buildQrNumbers(enableQR, qrStart, qrEnd) {
+    if (!enableQR || !qrStart || !qrEnd) {
+        return [];
     }
+
+    const startNum = Number.parseInt(qrStart, 10);
+    const endNum = Number.parseInt(qrEnd, 10);
+    if (!Number.isFinite(startNum) || !Number.isFinite(endNum) || endNum < startNum) {
+        return [];
+    }
+
+    const length = Math.max(qrStart.length, qrEnd.length);
+    return Array.from({ length: endNum - startNum + 1 }, (_, index) => String(startNum + index).padStart(length, '0'));
 }
 
-// 修改样例填充函数
-function fillSampleData() {
-    const textarea = document.getElementById('subjectData');
-    const currentContent = textarea.value.trim();
+function normalizeSubject(subject) {
+    return {
+        type: subject.type.trim(),
+        totalBags: toPositiveInt(subject.totalBags),
+        bagsPerBox: toPositiveInt(subject.bagsPerBox),
+        maxExtraBags: toNonNegativeInt(subject.maxExtraBags)
+    };
+}
 
-    // 检查是否已有内容
-    if (currentContent) {
-        if (!confirm('文本框中已有内容，是否清空并填充样例数据？')) {
+function isSubjectValid(subject) {
+    return Boolean(subject.type) && subject.totalBags > 0 && subject.bagsPerBox > 0;
+}
+
+function buildBoxes(snapshot) {
+    const visibleSubjects = snapshot.subjects.slice(0, snapshot.subjectCount).map(normalizeSubject);
+    const qrNumbers = buildQrNumbers(snapshot.enableQR, snapshot.qrStart, snapshot.qrEnd);
+    const region = snapshot.region.trim() || '地区名称';
+
+    let qrIndex = 0;
+    const boxes = [];
+    const showRightInfo = snapshot.showRightInfo;
+
+    visibleSubjects.forEach((subject, subjectIndex) => {
+        if (!isSubjectValid(subject)) {
             return;
         }
-    }
 
-    textarea.value = "CET4\t191\t60\t10\nCET6\t122\t30\t5\n学考语文\t88\t40\t8\n日语\t156\t50\t10\n13000英语专升本\t95\t35\t5";
-}
+        const boxCounts = calculateBoxCounts(subject.totalBags, subject.bagsPerBox, subject.maxExtraBags);
+        let cumulativeBags = 0;
 
-// 修改解析函数，增加数据验证
-function parseSubjectData() {
-    const data = document.getElementById('subjectData').value;
-    const lines = data.trim().split('\n');
-    const validLines = lines.filter(line => line.trim()); // 过滤空行
+        boxCounts.forEach((count, boxIndex) => {
+            cumulativeBags += count;
+            const qrData = snapshot.enableQR && qrIndex < qrNumbers.length
+                ? `${snapshot.qrPrefix}${qrNumbers[qrIndex++]}`
+                : '';
 
-    // 处理并验证每行数据
-    const validData = validLines.filter(line => {
-        const parts = line.trim().split(/\s+/);
-        // 检查是否至少有科目名称、袋数总计和每箱袋数
-        return parts.length >= 3 &&
-            !isNaN(parts[1]) && // 验证袋数总计是数字
-            !isNaN(parts[2]);   // 验证每箱袋数是数字
+            boxes.push({
+                key: `subject-${subjectIndex + 1}-box-${boxIndex + 1}`,
+                region,
+                boxNumber: `${boxIndex + 1}/${boxCounts.length}`,
+                count,
+                type: subject.type,
+                totalBags: subject.totalBags,
+                cumulativeBags,
+                qrData,
+                showRightInfo,
+                fontSizeClass: getFontSizeClass(subject.type)
+            });
+        });
     });
 
-    if (validData.length === 0) {
-        alert('没有找到有效的数据行！');
+    return {
+        boxes,
+        qrNumbers,
+        insufficientQr: snapshot.enableQR && qrNumbers.length > 0 && boxes.length > qrNumbers.length
+    };
+}
+
+function buildPages(boxes, duplicate) {
+    if (duplicate) {
+        return boxes.map(box => [box, box]);
+    }
+
+    const pages = [];
+    for (let index = 0; index < boxes.length; index += 2) {
+        pages.push(boxes.slice(index, index + 2));
+    }
+    return pages;
+}
+
+function parseManualLine(line) {
+    const parts = line.trim().split(/\s+/).filter(Boolean);
+    if (parts.length < 3) {
+        return null;
+    }
+
+    const [type, totalBags, bagsPerBox, maxExtraBags = '0'] = parts;
+    if (!type || Number.isNaN(Number.parseInt(totalBags, 10)) || Number.isNaN(Number.parseInt(bagsPerBox, 10))) {
+        return null;
+    }
+
+    return {
+        type,
+        totalBags,
+        bagsPerBox,
+        maxExtraBags: Number.isNaN(Number.parseInt(maxExtraBags, 10)) ? '0' : maxExtraBags
+    };
+}
+
+function cloneSnapshot(snapshot) {
+    return {
+        region: snapshot.region,
+        duplicate: snapshot.duplicate,
+        subjectCount: snapshot.subjectCount,
+        enableQR: snapshot.enableQR,
+        qrPrefix: snapshot.qrPrefix,
+        qrStart: snapshot.qrStart,
+        qrEnd: snapshot.qrEnd,
+        showRightInfo: snapshot.showRightInfo,
+        subjects: snapshot.subjects.map(subject => ({ ...subject }))
+    };
+}
+
+function renderQrCode(element, text) {
+    element.innerHTML = '';
+    if (!text) {
         return;
     }
 
-    // 设置科目数量
-    const select = document.getElementById('subjectCount');
-    select.value = validData.length;
-    updateVisibleInputs();
-
-    // 处理每行数据
-    validData.forEach((line, index) => {
-        const parts = line.trim().split(/\s+/);
-        const subjectIndex = index + 1;
-
-        // 设置科目名称
-        document.getElementById(`subjectType${subjectIndex}`).value = parts[0];
-        // 设置袋数总计
-        document.getElementById(`totalBags${subjectIndex}`).value = parts[1];
-        // 设置每箱袋数
-        document.getElementById(`bagsPerBox${subjectIndex}`).value = parts[2];
-        // 设置尾箱超限袋数（如果有且是有效数字）
-        document.getElementById(`maxExtraBags${subjectIndex}`).value =
-            (parts[3] && !isNaN(parts[3])) ? parts[3] : '0';
+    new QRCode(element, {
+        text,
+        width: 80,
+        height: 80,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
     });
-
-    // 解析完成后自动生成标签
-    setTimeout(() => {
-        if (hasValidSubjects()) {
-            generateLabels();
-        }
-    }, 100);
 }
+
+createApp({
+    directives: {
+        qrcode: {
+            mounted(element, binding) {
+                renderQrCode(element, binding.value);
+            },
+            updated(element, binding) {
+                if (binding.value !== binding.oldValue) {
+                    renderQrCode(element, binding.value);
+                }
+            }
+        }
+    },
+    setup() {
+        const region = ref(DEFAULT_REGION);
+        const duplicate = ref(DEFAULT_DUPLICATE);
+        const subjectCount = ref(1);
+        const enableQR = ref(false);
+        const showRightInfo = ref(true);
+        const qrPrefix = ref('');
+        const qrStart = ref('');
+        const qrEnd = ref('');
+        const manualInputVisible = ref(false);
+        const manualText = ref('');
+        const subjects = ref(createSubjectList());
+        const lastQrWarningShown = ref(false);
+        const subjectOptions = Array.from({ length: MAX_SUBJECTS }, (_, index) => index + 1);
+
+        const buildFormSnapshot = () => ({
+            region: region.value,
+            duplicate: duplicate.value,
+            subjectCount: Math.min(Math.max(subjectCount.value, 1), MAX_SUBJECTS),
+            enableQR: enableQR.value,
+            showRightInfo: showRightInfo.value,
+            qrPrefix: qrPrefix.value,
+            qrStart: qrStart.value,
+            qrEnd: qrEnd.value,
+            subjects: subjects.value.map(subject => ({ ...subject }))
+        });
+
+        const previewState = ref(cloneSnapshot(buildFormSnapshot()));
+
+        const visibleSubjects = computed(() => subjects.value.slice(0, subjectCount.value).map(normalizeSubject));
+        const hasValidSubjects = computed(() => visibleSubjects.value.some(isSubjectValid));
+        const previewResult = computed(() => buildBoxes(previewState.value));
+        const pages = computed(() => buildPages(previewResult.value.boxes, previewState.value.duplicate === '1'));
+
+        let previewTimer = null;
+
+        const flushPreview = () => {
+            if (previewTimer) {
+                clearTimeout(previewTimer);
+                previewTimer = null;
+            }
+
+            previewState.value = cloneSnapshot(buildFormSnapshot());
+        };
+
+        const schedulePreview = () => {
+            if (previewTimer) {
+                clearTimeout(previewTimer);
+            }
+
+            previewTimer = setTimeout(() => {
+                flushPreview();
+            }, PREVIEW_DEBOUNCE_MS);
+        };
+
+        const subjectSignature = computed(() => subjects.value
+            .map(subject => [subject.type, subject.totalBags, subject.bagsPerBox, subject.maxExtraBags].join('|'))
+            .join('||'));
+
+        watch(
+            [region, duplicate, subjectCount, enableQR, showRightInfo, qrPrefix, qrStart, qrEnd, subjectSignature],
+            schedulePreview,
+            { immediate: true }
+        );
+
+        watch(
+            () => previewResult.value.insufficientQr,
+            insufficientQr => {
+                if (insufficientQr && !lastQrWarningShown.value) {
+                    console.warn('二维码数量不足以分配给所有箱子');
+                    alert(`警告：生成的箱子总数(${previewResult.value.boxes.length})超过了二维码编号范围(${previewResult.value.qrNumbers.length})，部分箱子将没有二维码。`);
+                }
+
+                lastQrWarningShown.value = insufficientQr;
+            },
+            { immediate: true }
+        );
+
+        onBeforeUnmount(() => {
+            if (previewTimer) {
+                clearTimeout(previewTimer);
+            }
+        });
+
+        const resetSubjects = () => {
+            subjects.value = createSubjectList();
+        };
+
+        const toggleManualInput = () => {
+            manualInputVisible.value = !manualInputVisible.value;
+        };
+
+        const generateLabels = () => {
+            if (!hasValidSubjects.value) {
+                alert('请至少填写一个有效的科目数据后再生成标签。');
+                return;
+            }
+
+            flushPreview();
+        };
+
+        const fillSampleData = () => {
+            if (manualText.value.trim() && !window.confirm('文本框中已有内容，是否清空并填充样例数据？')) {
+                return;
+            }
+
+            manualText.value = SAMPLE_DATA;
+        };
+
+        const parseSubjectData = () => {
+            const validData = manualText.value
+                .split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(Boolean)
+                .map(parseManualLine)
+                .filter(Boolean);
+
+            if (validData.length === 0) {
+                alert('没有找到有效的数据行！');
+                return;
+            }
+
+            const limitedData = validData.slice(0, MAX_SUBJECTS);
+            if (validData.length > MAX_SUBJECTS) {
+                alert(`最多只支持导入 ${MAX_SUBJECTS} 个科目，已自动截取前 ${MAX_SUBJECTS} 行有效数据。`);
+            }
+
+            resetSubjects();
+            subjectCount.value = limitedData.length;
+
+            limitedData.forEach((subject, index) => {
+                subjects.value[index] = {
+                    type: subject.type,
+                    totalBags: subject.totalBags,
+                    bagsPerBox: subject.bagsPerBox,
+                    maxExtraBags: subject.maxExtraBags
+                };
+            });
+
+            flushPreview();
+        };
+
+        const printLabels = () => {
+            window.print();
+        };
+
+        return {
+            region,
+            duplicate,
+            subjectCount,
+            subjectOptions,
+            enableQR,
+            showRightInfo,
+            qrPrefix,
+            qrStart,
+            qrEnd,
+            manualInputVisible,
+            manualText,
+            subjectDataPlaceholder: SUBJECT_DATA_PLACEHOLDER,
+            subjects,
+            pages,
+            toggleManualInput,
+            generateLabels,
+            fillSampleData,
+            parseSubjectData,
+            printLabels
+        };
+    }
+}).mount('#app');
