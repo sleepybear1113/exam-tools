@@ -158,7 +158,7 @@
                         <hr>
                         <div class="row">
                             <div class="col-12">
-                                <p><strong>接收方：</strong>{{ group.venueName }}</p>
+                                <p><strong>接收方：</strong><span class="cell-light-gray handover-highlight">{{ group.venueName }}</span></p>
                             </div>
                         </div>
                         <div class="row">
@@ -186,7 +186,7 @@
                     <div class="envelope-venue-name">{{ item.venueName }}</div>
                     <table class="table table-bordered envelope-table">
                         <tr>
-                            <td>科目：{{ item.subject }}</td>
+                            <td class="cell-light-gray">科目：{{ item.subject }}</td>
                             <td>起止号：{{ item.roomStart }}-{{ item.roomEnd }}</td>
                         </tr>
                         <tr>
@@ -212,7 +212,7 @@
                                  class="bundle-subject-group">
                                 <table class="table table-sm table-bordered bundle-table">
                                     <tr>
-                                        <td><strong>科目：</strong>{{ subjectData.subject }}</td>
+                                        <td class="cell-light-gray"><strong>科目：</strong>{{ subjectData.subject }}</td>
                                         <td><strong>起止号：</strong>{{ subjectData.fullRange }}</td>
                                         <td><strong>总捆数：</strong>共{{ subjectData.totalBundles }}捆</td>
                                     </tr>
@@ -228,7 +228,7 @@
                                     <tr v-if="subjectData.spareVolumeCount">
                                         <td colspan="2"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
                                         </td>
-                                        <td colspan="1"><strong>备用卷数量：</strong>{{ subjectData.spareVolumeCount }}
+                                        <td colspan="1" class="cell-light-gray"><strong>备用卷数量：</strong>{{ subjectData.spareVolumeCount }}
                                         </td>
                                     </tr>
                                 </table>
@@ -244,7 +244,7 @@
                                  class="bundle-subject-group">
                                 <table class="table table-sm table-bordered bundle-table">
                                     <tr>
-                                        <td><strong>科目：</strong>{{ subjectData.subject }}</td>
+                                        <td class="cell-light-gray"><strong>科目：</strong>{{ subjectData.subject }}</td>
                                         <td><strong>起止号：</strong>{{ subjectData.fullRange }}</td>
                                         <td><strong>总捆数：</strong>共{{ subjectData.totalBundles }}捆</td>
                                     </tr>
@@ -260,7 +260,7 @@
                                     <tr v-if="subjectData.spareVolumeCount">
                                         <td colspan="2"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
                                         </td>
-                                        <td colspan="1">
+                                        <td colspan="1" class="cell-light-gray">
                                             <strong>备用卷数量：</strong>{{ subjectData.spareVolumeCount }}
                                         </td>
                                     </tr>
