@@ -44,6 +44,10 @@ hr {
     color: #000 !important;
 }
 
+.cell-light-gray {
+    background-color: #f2f2f2 !important;
+}
+
 /* 文件拖拽区域 */
 .file-drop-zone {
     border: 2px dashed #ccc;
