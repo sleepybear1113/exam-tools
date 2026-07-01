@@ -73,6 +73,18 @@ hr {
     display: block;
 }
 
+.page-indicator {
+    position: absolute;
+    top: 6mm;
+    left: 6mm;
+    z-index: 2;
+    font-size: 12px;
+    line-height: 1;
+    color: #666;
+    pointer-events: none;
+    user-select: none;
+}
+
 /* 打印样式 */
 @media print {
     /* 强制打印背景色和背景图片 */
@@ -105,6 +117,7 @@ hr {
 
 /* ========== 模块一：考试试卷答卷交接单 ========== */
 .handover-page {
+    position: relative;
     padding: 20mm 15mm;
     min-width: 210mm; /* A4纵向宽度 */
     min-height: 210mm; /* A4纵向高度 */
@@ -163,6 +176,7 @@ hr {
 
 /* ========== 模块二：条形码信封袋封面 ========== */
 .envelope-page {
+    position: relative;
     min-width: 210mm; /* A4纵向宽度 */
     min-height: 110mm; /* A4纵向高度 */
     display: flex;
@@ -195,32 +209,44 @@ hr {
 
 /* ========== 模块三：试卷/答卷捆扎标签 ========== */
 .bundle-page {
+    position: relative;
+    width: 210mm;
     min-width: 210mm; /* A4纵向宽度 */
-    min-height: 210mm; /* A4纵向高度 */
+    min-height: 297mm; /* A4纵向高度 */
+    height: 297mm;
     padding: 10mm;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: calc((100% - 1px) / 2) 1px calc((100% - 1px) / 2);
+    gap: 0;
+    overflow: hidden;
+}
+
+.bundle-cut-line {
+    width: 100%;
+    border-top: 1px solid #cacaca;
+    align-self: center;
 }
 
 .bundle-label {
-    flex: 1;
-    padding: 15px;
+    padding: 8mm 5mm;
     display: flex;
     flex-direction: column;
     justify-content: center; /* 垂直居中 */
-    min-height: 120mm;
+    min-height: 0;
+    height: 100%;
 }
 
 .bundle-label-top {
-    margin-bottom: 5mm;
+    margin-bottom: 0;
 }
 
 .bundle-label-bottom {
-    margin-top: 5mm;
+    margin-top: 0;
 }
 
 .bundle-content {
     width: 100%;
+    flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center; /* 垂直居中内容 */
@@ -242,16 +268,53 @@ hr {
     border-collapse: collapse;
     font-size: 18px;
     margin: 0 auto 0;
+    table-layout: fixed;
 }
 
 .bundle-table td {
     border: 1px solid #000;
     padding: 4px;
     text-align: left;
+    vertical-align: middle;
+    word-break: break-word;
 }
 
 .bundle-table td strong {
     margin-right: 5px;
+}
+
+.bundle-col-subject {
+    width: 48%;
+}
+
+.bundle-col-equal {
+    width: 26%;
+}
+
+.bundle-subject-cell {
+    text-align: center !important;
+    font-size: 1.25em;
+    font-weight: bold;
+}
+
+.bundle-subject-name {
+    line-height: 1.2;
+    font-size: 1.6em;
+}
+
+.bundle-quantity-cell {
+    text-align: center !important;
+    font-size: 1em;
+    font-weight: bold;
+}
+
+.bundle-quantity-value {
+    font-size: 1.6em;
+    line-height: 1.2;
+}
+
+.bundle-time-cell {
+    text-align: center !important;
 }
 
 /* 响应式调整 */
@@ -267,9 +330,20 @@ hr {
     .envelope-page,
     .bundle-page {
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid #ddd;
+        background-color: #fff;
         margin-bottom: 20px;
     }
 
+}
+
+@media print {
+    .bundle-page {
+        width: 210mm;
+        min-width: 210mm;
+        min-height: 297mm;
+        height: 297mm;
+    }
 }
 
 /* 按钮样式增强 */

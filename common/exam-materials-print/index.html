@@ -118,6 +118,7 @@
              class="print-content">
             <div v-for="(group, groupIdx) in groupedData" :key="groupIdx">
                 <div v-if="group.items && group.items.length > 0" class="handover-page" contenteditable="true">
+                    <div class="page-indicator no-print">第{{ groupIdx + 1 }}页/共{{ groupedData.length }}页</div>
                     <div class="handover-header">
                         <h3 class="text-center mb-3">{{ examName }}</h3>
                         <h4 class="text-center mb-4">考试试卷答卷交接单</h4>
@@ -182,6 +183,7 @@
         <div v-if="currentModule === 'envelope' && processedData.length > 0" class="print-content">
             <div v-for="(item, idx) in processedData" :key="idx" class="envelope-page"
                  :style="{ marginLeft: envelopeMarginLeft + 'mm', marginTop: envelopeMarginTop + 'mm' }">
+                <div class="page-indicator no-print">第{{ idx + 1 }}页/共{{ processedData.length }}页</div>
                 <div class="envelope-content" contenteditable="true">
                     <div class="envelope-venue-name">{{ item.venueName }}</div>
                     <table class="table table-bordered envelope-table">
@@ -204,64 +206,85 @@
         <div v-if="currentModule === 'bundle' && bundlePages.length > 0" class="print-content">
             <div v-for="(page, pageIdx) in bundlePages" :key="pageIdx">
                 <div v-if="page.paperBundle || page.answerBundle" class="bundle-page" contenteditable="true">
+                    <div class="page-indicator no-print">第{{ pageIdx + 1 }}页/共{{ bundlePages.length }}页</div>
                     <!-- 上联：试卷捆标签 -->
                     <div class="bundle-label bundle-label-top">
                         <div v-if="page.paperBundle" class="bundle-content">
                             <h2 class="text-center bundle-title">试卷捆 {{ page.paperBundle.venueName ? page.paperBundle.venueName : "" }}</h2>
                             <div v-for="(subjectData, subIdx) in page.paperBundle.subjects" :key="subIdx"
-                                 class="bundle-subject-group">
+                                  class="bundle-subject-group">
                                 <table class="table table-sm table-bordered bundle-table">
+                                    <colgroup>
+                                        <col class="bundle-col-subject">
+                                        <col class="bundle-col-equal">
+                                        <col class="bundle-col-equal">
+                                    </colgroup>
                                     <tr>
-                                        <td class="cell-light-gray"><strong>科目：</strong>{{ subjectData.subject }}</td>
+                                        <td class="bundle-subject-cell" rowspan="2">
+                                            <div class="bundle-subject-name">{{ subjectData.subject }}</div>
+                                        </td>
+                                        <td class="bundle-quantity-cell" rowspan="2">
+                                            <div class="bundle-quantity-value">数量：{{ subjectData.quantity }}</div>
+                                        </td>
+                                        <td><strong>总数量：</strong>{{ subjectData.totalCount }}份</td>
+                                    </tr>
+                                    <tr>
+                                        <td v-if="subjectData.spareVolumeCount" class="cell-light-gray">
+                                            <strong>备用：</strong>{{ subjectData.spareVolumeCount }}份
+                                        </td>
+                                        <td v-else>&nbsp;</td>
+                                    </tr>
+                                    <tr>
                                         <td><strong>起止号：</strong>{{ subjectData.fullRange }}</td>
+                                        <td><strong>当前捆：</strong>第{{ subjectData.bundleNo }}捆</td>
                                         <td><strong>总捆数：</strong>共{{ subjectData.totalBundles }}捆</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>当前捆数量：</strong>{{ subjectData.quantity }}份</td>
-                                        <td><strong>总数量：</strong>{{ subjectData.totalCount }}份</td>
-                                        <td><strong>当前捆：</strong>第{{ subjectData.bundleNo }}捆</td>
-                                    </tr>
-                                    <tr v-if="!subjectData.spareVolumeCount">
-                                        <td colspan="3"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
-                                        </td>
-                                    </tr>
-                                    <tr v-if="subjectData.spareVolumeCount">
-                                        <td colspan="2"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
-                                        </td>
-                                        <td colspan="1" class="cell-light-gray"><strong>备用卷数量：</strong>{{ subjectData.spareVolumeCount }}
+                                        <td colspan="3" class="bundle-time-cell">
+                                            <strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
                                         </td>
                                     </tr>
                                 </table>
                             </div>
                         </div>
                     </div>
+                    <div class="bundle-cut-line" aria-hidden="true"></div>
 
                     <!-- 下联：答卷捆标签 -->
                     <div class="bundle-label bundle-label-bottom">
                         <div v-if="page.answerBundle" class="bundle-content">
                             <h3 class="text-center bundle-title">答卷捆 {{ page.answerBundle.venueName ? page.answerBundle.venueName : "" }}</h3>
                             <div v-for="(subjectData, subIdx) in page.answerBundle.subjects" :key="subIdx"
-                                 class="bundle-subject-group">
+                                  class="bundle-subject-group">
                                 <table class="table table-sm table-bordered bundle-table">
+                                    <colgroup>
+                                        <col class="bundle-col-subject">
+                                        <col class="bundle-col-equal">
+                                        <col class="bundle-col-equal">
+                                    </colgroup>
                                     <tr>
-                                        <td class="cell-light-gray"><strong>科目：</strong>{{ subjectData.subject }}</td>
+                                        <td class="bundle-subject-cell" rowspan="2">
+                                            <div class="bundle-subject-name">{{ subjectData.subject }}</div>
+                                        </td>
+                                        <td class="bundle-quantity-cell" rowspan="2">
+                                            <div class="bundle-quantity-value">数量：{{ subjectData.quantity }}</div>
+                                        </td>
+                                        <td><strong>总数量：</strong>{{ subjectData.totalCount }}份</td>
+                                    </tr>
+                                    <tr>
+                                        <td v-if="subjectData.spareVolumeCount" class="cell-light-gray">
+                                            <strong>备用：</strong>{{ subjectData.spareVolumeCount }}份
+                                        </td>
+                                        <td v-else>&nbsp;</td>
+                                    </tr>
+                                    <tr>
                                         <td><strong>起止号：</strong>{{ subjectData.fullRange }}</td>
+                                        <td><strong>当前捆：</strong>第{{ subjectData.bundleNo }}捆</td>
                                         <td><strong>总捆数：</strong>共{{ subjectData.totalBundles }}捆</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>当前捆数量：</strong>{{ subjectData.quantity }}份</td>
-                                        <td><strong>总数量：</strong>{{ subjectData.totalCount }}份</td>
-                                        <td><strong>当前捆：</strong>第{{ subjectData.bundleNo }}捆</td>
-                                    </tr>
-                                    <tr v-if="!subjectData.spareVolumeCount">
-                                        <td colspan="3"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
-                                        </td>
-                                    </tr>
-                                    <tr v-if="subjectData.spareVolumeCount">
-                                        <td colspan="2"><strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
-                                        </td>
-                                        <td colspan="1" class="cell-light-gray">
-                                            <strong>备用卷数量：</strong>{{ subjectData.spareVolumeCount }}
+                                        <td colspan="3" class="bundle-time-cell">
+                                            <strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
                                         </td>
                                     </tr>
                                 </table>
