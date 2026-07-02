@@ -284,11 +284,11 @@ hr {
 }
 
 .bundle-col-subject {
-    width: 48%;
+    width: 44%;
 }
 
 .bundle-col-equal {
-    width: 26%;
+    width: 28%;
 }
 
 .bundle-subject-cell {
@@ -299,7 +299,7 @@ hr {
 
 .bundle-subject-name {
     line-height: 1.2;
-    font-size: 1.6em;
+    font-size: 2em;
 }
 
 .bundle-quantity-cell {
@@ -309,7 +309,7 @@ hr {
 }
 
 .bundle-quantity-value {
-    font-size: 1.6em;
+    font-size: 2em;
     line-height: 1.2;
 }
 
