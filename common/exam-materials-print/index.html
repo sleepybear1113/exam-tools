@@ -169,7 +169,7 @@
                         </div>
                         <div class="row">
                             <div class="col-12">
-                                <p><strong>接收人：</strong></p>
+                                <p><strong>接收人签字：</strong></p>
                             </div>
                         </div>
 
@@ -188,12 +188,14 @@
                     <div class="envelope-venue-name">{{ item.venueName }}</div>
                     <table class="table table-bordered envelope-table">
                         <tr>
-                            <td class="cell-light-gray">科目：{{ item.subject }}</td>
-                            <td>起止号：{{ item.roomStart }}-{{ item.roomEnd }}</td>
+                            <td colspan="2" class="cell-light-gray envelope-subject-cell">{{ item.subject }}</td>
                         </tr>
                         <tr>
+                            <td>起止号：{{ item.roomStart }}-{{ item.roomEnd }}</td>
                             <td>条码：{{ item.barcodeCount }}</td>
-                            <td>考试时间：{{ item.examTime || '____' }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" >考试时间：{{ item.examTime || '----' }}</td>
                         </tr>
                     </table>
                 </div>

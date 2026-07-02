@@ -196,6 +196,7 @@ hr {
 
 .envelope-table {
     width: auto;
+    min-width: 400px;
     margin: 0 auto;
     border-collapse: collapse;
     font-size: 16px;
@@ -204,7 +205,11 @@ hr {
 .envelope-table td {
     border: 1px solid #000;
     padding: 8px 15px;
-    text-align: left;
+}
+
+.envelope-subject-cell {
+    font-size: 1.6em;
+    text-align: center;
 }
 
 /* ========== 模块三：试卷/答卷捆扎标签 ========== */
@@ -377,4 +382,3 @@ hr {
 .page-break {
     page-break-after: always;
 }
-
