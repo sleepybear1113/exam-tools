@@ -67,16 +67,24 @@
         }
 
         .tool-icon {
-            width: 30px;
-            height: 30px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            border-radius: 5px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #edf0ff, #dfe5ff);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 0.5rem;
-            color: black;
-            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.7rem;
+            line-height: 1;
+            box-shadow: 0 6px 14px rgba(102, 126, 234, 0.16);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .tool-card:hover .tool-icon {
+            transform: scale(1.08) rotate(-3deg);
+            box-shadow: 0 9px 18px rgba(102, 126, 234, 0.24);
         }
 
         .page-header {
@@ -179,7 +187,7 @@
                 <a href="./common/watermark/index.html" target="_blank" class="text-decoration-none">
                     <div class="card tool-card">
                         <div class="card-body text-center">
-                            <div class="tool-icon mx-auto">📝</div>
+                            <div class="tool-icon mx-auto">💧</div>
                             <h5 class="card-title">水印打印工具</h5>
                             <p class="card-text">
                                 可以批量给文档的不同页面打印上不同的水印。
@@ -208,7 +216,7 @@
                 <a href="./common/exam-materials-print/index.html" target="_blank" class="text-decoration-none">
                     <div class="card tool-card">
                         <div class="card-body text-center">
-                            <div class="tool-icon mx-auto">📊</div>
+                            <div class="tool-icon mx-auto">🖨️</div>
                             <h5 class="card-title">考试考务材料打印工具</h5>
                             <p class="card-text">
                                 根据考务材料模板生成交接单、信封、试卷捆等材料。</p>
@@ -226,7 +234,7 @@
                 <a href="./gaokao/tijian/index.html" target="_blank" class="text-decoration-none">
                     <div class="card tool-card">
                         <div class="card-body text-center">
-                            <div class="tool-icon mx-auto">📋</div>
+                            <div class="tool-icon mx-auto">🩺</div>
                             <h5 class="card-title">高考体检数据校验</h5>
                             <p class="card-text">
                                 可以解析体检的DBF文件，校验其中体检的数据是否有冲突、异常，并形成导出数据可以核对。</p>
@@ -240,7 +248,7 @@
                 <a href="gaokao/xk-baoming-check/index.html" target="_blank" class="text-decoration-none">
                     <div class="card tool-card">
                         <div class="card-body text-center">
-                            <div class="tool-icon mx-auto">📋</div>
+                            <div class="tool-icon mx-auto">📝</div>
                             <h5 class="card-title">学考选考报名数据校验</h5>
                             <p class="card-text">
                                 可以解析选考报名的Excel文件，校验其中选考报名的数据是否有冲突、异常，并形成导出数据可以核对。
@@ -255,7 +263,7 @@
                 <a href="./gaokao/gk-baoming-check/index.html" target="_blank" class="text-decoration-none">
                     <div class="card tool-card">
                         <div class="card-body text-center">
-                            <div class="tool-icon mx-auto">📋</div>
+                            <div class="tool-icon mx-auto">🔍</div>
                             <h5 class="card-title">高考报名数据校验-考生报名表PDF</h5>
                             <p class="card-text">
                                 可以解析考生报名表PDF文件，校验其中报名的数据是否有冲突、异常，并形成导出数据可以核对。
@@ -270,7 +278,7 @@
                 <a href="./gaokao/process-exam-data/index.html" target="_blank" class="text-decoration-none">
                     <div class="card tool-card">
                         <div class="card-body text-center">
-                            <div class="tool-icon mx-auto">📋</div>
+                            <div class="tool-icon mx-auto">📈</div>
                             <h5 class="card-title">高考、学选考数据统计处理</h5>
                             <p class="card-text">
                                 上传报名数据，根据文件自动识别学选考或高考格式，统计县区、报名点维度的学考/选考/外语等情况。
@@ -289,7 +297,7 @@
                 <a href="./zikao/exam-materials-print/index.html" target="_blank" class="text-decoration-none">
                     <div class="card tool-card">
                         <div class="card-body text-center">
-                            <div class="tool-icon mx-auto">📋</div>
+                            <div class="tool-icon mx-auto">🖨️</div>
                             <h5 class="card-title">自考考务材料打印</h5>
                             <p class="card-text">
                                 根据自考考务材料模板生成交接单、信封、场贴等材料。
@@ -299,6 +307,25 @@
                     </div>
                 </a>
             </div>
+
+            <div class="col-lg-4 col-md-6 col-sm-12 tool-item">
+                <a href="./zikao/exam-materials-print/index.html" target="_blank" class="text-decoration-none">
+                    <div class="card tool-card">
+                        <div class="card-body text-center">
+                            <div class="tool-icon mx-auto">🏷️</div>
+                            <h5 class="card-title">自考桌贴打印</h5>
+                            <p class="card-text">
+                                根据自考考务材料模板生成桌贴，方便张贴至考场桌面，进行信息的展示。
+                            </p>
+                            <small class="text-muted">点击进入工具 →</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+           
         </div>
 
     </div>
