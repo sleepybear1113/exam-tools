@@ -1,0 +1,70 @@
+body { background: #f5f6f8; }
+.settings { max-width: 1100px; }
+.print-page {
+    width: 210mm;
+    height: 297mm;
+    margin: 0 auto;
+    padding: 8mm;
+    background: #fff;
+    color: #000;
+    box-sizing: border-box;
+    break-after: page;
+    page-break-after: always;
+    overflow: hidden;
+}
+.page-header {
+    height: 20mm;
+    display: flex;
+    font-size: 10pt;
+    line-height: 1.35;
+}
+.course-list { flex: 1; min-width: 0; overflow: hidden; }
+.course-line { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; }
+.course-line span { min-width: 0; }
+.page-summary {
+    width: 22mm;
+    flex: 0 0 22mm;
+    margin-left: 3mm;
+    text-align: center;
+    border-left: 1px solid #777;
+    font-size: 9pt;
+}
+.page-summary div { height: 10mm; display: flex; align-items: center; justify-content: center; }
+.page-summary div + div { border-top: 1px solid #777; }
+.sticker-grid { display: grid; height: 255mm; }
+.count-35 { grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(7, 1fr); }
+.count-30 { grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(6, 1fr); }
+.count-18 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(6, 1fr); }
+.count-15 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(5, 1fr); }
+.sticker {
+    padding: 1.5mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    font-family: "Microsoft YaHei", sans-serif;
+    border-right: 1px dashed #b7b7b7;
+    border-bottom: 1px dashed #b7b7b7;
+}
+.sticker-name { font-size: 15pt; line-height: 1.2; word-break: break-all; }
+.sticker-seat { font-size: 30pt; line-height: 1.05; font-weight: bold; margin: .5mm 0; }
+.sticker-detail { font-size: 9pt; line-height: 1.25; word-break: break-all; }
+.density-compact .sticker { padding: .8mm; }
+.density-compact .sticker-name { font-size: 12pt; }
+.density-compact .sticker-seat { font-size: 24pt; }
+.density-compact .sticker-detail { font-size: 7.5pt; line-height: 1.15; }
+.density-spacious .sticker { padding: 2mm; }
+.density-spacious .sticker-name { font-size: 17pt; }
+.density-spacious .sticker-seat { font-size: 34pt; }
+.density-spacious .sticker-detail { font-size: 10pt; }
+.page-divider { max-width: 210mm; border: 0; border-top: 2px dashed #7b7b7b; margin: 14mm auto; }
+@media print {
+    @page { size: A4 portrait; margin: 0; }
+    body { background: #fff; }
+    body > *:not(#app) { display: none !important; }
+    #app > *:not(#print-result) { display: none !important; }
+    .no-print, .page-divider { display: none !important; }
+    #print-result { display: block !important; }
+    .print-page { margin: 0; }
+}

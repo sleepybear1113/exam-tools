@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>考生信息桌贴</title>
+    <link rel="stylesheet" href="../../lib/bootstrap/5.3.8/bootstrap.min.css">
+    <link rel="stylesheet" href="index.css">
+    <script src="../../lib/vue/3.5.20/vue.global.prod.js"></script>
+    <script src="../../lib/sheetjs/0.20.3/xlsx.mini.min.js"></script>
+    <script src="../../lib/bootstrap/5.3.8/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <main class="container-fluid py-4 no-print settings">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white"><h1 class="h5 mb-0">考生信息桌贴</h1></div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <label class="form-label fw-semibold">上传考生信息 Excel</label>
+                        <input class="form-control" type="file" accept=".xlsx,.xls" @change="readExcel">
+                        <div class="form-text">读取第一个工作表，必须包含指定的 8 个表头。</div>
+                        <div v-if="errorMessage" class="alert alert-danger mt-3 mb-0">{{ errorMessage }}</div>
+                        <div v-if="records.length" class="alert alert-success mt-3 mb-0">已读取 {{ records.length }} 名考生。</div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">同考场是否连续编号</label>
+                                <select class="form-select" v-model="continuous">
+                                    <option :value="true">是</option>
+                                    <option :value="false">否</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">每页桌贴数量</label>
+                                <select class="form-select" v-model.number="perPage">
+                                    <option :value="35">35</option>
+                                    <option :value="30">30</option>
+                                    <option :value="18">18</option>
+                                    <option :value="15">15</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <div class="fw-semibold mb-1">桌贴展示字段</div>
+                                <div class="d-flex flex-wrap gap-x-3 gap-y-1">
+                                    <label v-for="field in fields" :key="field.key" class="form-check form-check-inline me-3">
+                                        <input class="form-check-input" type="checkbox" v-model="enabledFields" :value="field.key">
+                                        <span class="form-check-label">{{ field.label }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 d-flex gap-2">
+                    <button class="btn btn-primary" :disabled="!records.length" @click="buildPages">生成桌贴</button>
+                    <button class="btn btn-success" :disabled="!pages.length" onclick="window.print()">打印</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <section id="print-result" v-if="pages.length">
+        <template v-for="(page, index) in pages" :key="page.key">
+            <article class="print-page">
+                <header class="page-header">
+                    <div class="course-list">
+                        <div v-for="course in page.courses" :key="course.key" class="course-line">
+                            <span>{{ course.课程名称 }}</span>
+                            <span>{{ course.课程代码 }}</span>
+                            <span>考场序号：{{ course.考场序号 }}</span>
+                            <span>合并考场号：{{ course.合并考场号 }}</span>
+                        </div>
+                    </div>
+                    <aside class="page-summary">
+                        <div>第 {{ index + 1 }} 页</div>
+                        <div>共 {{ page.groupTotal }} 人</div>
+                    </aside>
+                </header>
+                <div class="sticker-grid" :class="['count-' + perPage, stickerDensityClass]">
+                    <div v-for="(student, studentIndex) in page.students" :key="studentIndex" class="sticker">
+                        <div v-if="hasField('name')" class="sticker-name">{{ student.考生姓名 }}</div>
+                        <div v-if="hasField('seat')" class="sticker-seat">{{ student.displaySeat }}</div>
+                        <div v-if="hasField('admission')" class="sticker-detail">{{ student.准考证号 }}</div>
+                        <div v-if="hasField('courseName')" class="sticker-detail">{{ student.课程名称 }}</div>
+                        <div v-if="hasField('courseCode')" class="sticker-detail">{{ student.课程代码 }}</div>
+                        <div v-if="hasField('mergedRoom')" class="sticker-detail">{{ student.合并考场号 }}</div>
+                    </div>
+                </div>
+            </article>
+            <hr v-if="index < pages.length - 1" class="page-divider no-print">
+        </template>
+    </section>
+
+    <section v-else-if="records.length" class="text-center text-secondary py-5 no-print">请点击“生成桌贴”。</section>
+</div>
+<script src="index.js"></script>
+</body>
+</html>
