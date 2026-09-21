@@ -105,13 +105,13 @@
         });
     }
 
-    function setControlsEnabled(enabled) {
+    function setControlsEnabled(enabled, hasWarnings = enabled) {
         els.btnClear.disabled = !enabled;
-        els.btnExportAll.disabled = !enabled;
+        els.btnExportAll.disabled = !hasWarnings;
         if (els.btnExportStats) els.btnExportStats.disabled = !enabled;
-        els.chkZip.disabled = !enabled;
-        els.groupLenSelect.disabled = !enabled || !els.chkZip.checked;
-        els.btnExportZip.disabled = !enabled || !els.chkZip.checked;
+        els.chkZip.disabled = !hasWarnings;
+        els.groupLenSelect.disabled = !hasWarnings || !els.chkZip.checked;
+        els.btnExportZip.disabled = !hasWarnings || !els.chkZip.checked;
     }
 
     function normalizeSpaces(s) {
@@ -462,7 +462,7 @@
             });
             renderStats(stats);
             renderWarnings(warnings);
-            setControlsEnabled(true);
+            setControlsEnabled(true, warnings.length > 0);
         } finally {
             hideLoading();
         }
@@ -629,5 +629,4 @@
     // init
     wireEvents();
 })();
-
 

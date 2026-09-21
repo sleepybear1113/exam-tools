@@ -12,6 +12,10 @@ body { background: #f5f6f8; }
     page-break-after: always;
     overflow: hidden;
 }
+.print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+}
 .page-header {
     height: 20mm;
     display: flex;

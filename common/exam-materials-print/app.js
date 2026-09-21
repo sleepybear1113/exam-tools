@@ -168,7 +168,7 @@ const vm = createApp({
 
                         // 验证必需字段
                         const requiredFields = ["venueName", "session", "subject"];
-                        const missingFields = requiredFields.filter(f => !fieldIndexMap[f]);
+                        const missingFields = requiredFields.filter(f => fieldIndexMap[f] === undefined);
                         if (missingFields.length > 0) {
                             reject(new Error(`缺少必需字段：${missingFields.map(f => Object.keys(fieldMap).find(k => fieldMap[k] === f)).join(", ")}`));
                             return;
@@ -697,48 +697,26 @@ const vm = createApp({
                 }
             });
 
-            let papers = [];
-            let answers = [];
-            pages.forEach(page => {
-                if (page.paperBundle) {
-                    page.paperBundle.firstSubjectName = page.paperBundle.subjects.length > 0 ? page.paperBundle.subjects[0].subject : '';
-                    papers.push(page.paperBundle);
-                }
-                if (page.answerBundle) {
-                    page.answerBundle.firstSubjectName = page.answerBundle.subjects.length > 0 ? page.answerBundle.subjects[0].subject : '';
-                    answers.push(page.answerBundle);
-                }
-            });
             if (sortMode.value === "session") {
-                // 按场次排序
-                [papers, answers].forEach(list => {
-                    list.sort((a, b) => {
-                        if (a.session !== b.session) {
-                            return a.session - b.session;
-                        }
-                        if (a.firstSubjectName !== b.firstSubjectName) {
-                            return a.firstSubjectName.localeCompare(b.firstSubjectName, "zh-CN");
-                        }
-                        if (a.venueId !== b.venueId) {
-                            return a.venueId - b.venueId;
-                        }
-                        if (a.venueName !== b.venueName) {
-                            return a.venueName.localeCompare(b.venueName, "zh-CN");
-                        }
-                    });
+                pages.sort((a, b) => {
+                    const aBundle = a.paperBundle || a.answerBundle;
+                    const bBundle = b.paperBundle || b.answerBundle;
+                    const aSubject = aBundle.subjects.length > 0 ? aBundle.subjects[0].subject : '';
+                    const bSubject = bBundle.subjects.length > 0 ? bBundle.subjects[0].subject : '';
+                    if (aBundle.session !== bBundle.session) {
+                        return aBundle.session - bBundle.session;
+                    }
+                    if (aSubject !== bSubject) {
+                        return aSubject.localeCompare(bSubject, "zh-CN");
+                    }
+                    if (aBundle.venueId !== bBundle.venueId) {
+                        return aBundle.venueId - bBundle.venueId;
+                    }
+                    return aBundle.venueName.localeCompare(bBundle.venueName, "zh-CN");
                 });
             }
 
-            let maxLen = Math.max(papers.length, answers.length);
-            let balancedPages = [];
-            for (let i = 0; i < maxLen; i++) {
-                balancedPages.push({
-                    paperBundle: papers[i] || null,
-                    answerBundle: answers[i] || null
-                });
-            }
-
-            return balancedPages;
+            return pages;
         });
 
         // 切换模块
@@ -799,4 +777,3 @@ const vm = createApp({
 });
 
 vm.mount("#app-exam-materials-print");
-

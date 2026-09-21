@@ -8,6 +8,9 @@ class Field {
 
 function parseDBF(arrayBuffer, encoding) {
     const view = new DataView(arrayBuffer);
+    if (view.byteLength < 32) {
+        throw new Error('DBF 文件头不完整');
+    }
 
     // 解析文件头
     const version = view.getUint8(0);
@@ -17,13 +20,19 @@ function parseDBF(arrayBuffer, encoding) {
     const recordCount = view.getUint32(4, true);  // Little-endian
     const headerLength = view.getUint16(8, true);
     const recordLength = view.getUint16(10, true);
+    if (headerLength < 33 || headerLength > view.byteLength || recordLength < 1) {
+        throw new Error('DBF 文件头长度无效');
+    }
 
     // 解析字段信息
     const fields = [];
     let offset = 32; // 头部后的第一个字段描述
 
     // 读取字段描述，直到遇到终止符 0x0D
-    while (view.getUint8(offset) !== 0x0D) {
+    while (offset < headerLength && view.getUint8(offset) !== 0x0D) {
+        if (offset + 32 > headerLength) {
+            throw new Error('DBF 字段定义不完整');
+        }
         // 读取字段名（前11字节）
         let fieldName = '';
         for (let j = 0; j < 11; j++) {
@@ -40,6 +49,12 @@ function parseDBF(arrayBuffer, encoding) {
 
         offset += 32; // 每个字段描述32字节
     }
+    if (offset >= headerLength || view.getUint8(offset) !== 0x0D) {
+        throw new Error('DBF 缺少字段结束标记');
+    }
+    if (fields.reduce((total, field) => total + field.length, 0) + 1 > recordLength) {
+        throw new Error('DBF 记录长度无效');
+    }
 
     // 获取适当的TextDecoder
     const decoder = getDecoder(encoding);
@@ -49,6 +64,9 @@ function parseDBF(arrayBuffer, encoding) {
     offset = headerLength;  // 记录起始位置
 
     for (let i = 0; i < recordCount; i++) {
+        if (offset + recordLength > view.byteLength) {
+            throw new Error('DBF 记录数据不完整');
+        }
         // 检查删除标记（0x2A表示删除）
         if (view.getUint8(offset) === 0x2A) {
             offset += recordLength;

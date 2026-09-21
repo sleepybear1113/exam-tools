@@ -87,6 +87,19 @@ hr {
 
 /* 打印样式 */
 @media print {
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+
+    body > *:not(#app-exam-materials-print) {
+        display: none !important;
+    }
+
+    #app-exam-materials-print > *:not(.print-output) {
+        display: none !important;
+    }
+
     /* 强制打印背景色和背景图片 */
     * {
         -webkit-print-color-adjust: exact !important;
@@ -120,7 +133,10 @@ hr {
     position: relative;
     padding: 20mm 15mm;
     min-width: 210mm; /* A4纵向宽度 */
-    min-height: 210mm; /* A4纵向高度 */
+    min-height: 297mm; /* A4纵向高度 */
+    box-sizing: border-box;
+    break-inside: avoid;
+    page-break-inside: avoid;
 }
 
 .handover-header {
@@ -380,5 +396,6 @@ hr {
 }
 
 .page-break {
+    break-after: page;
     page-break-after: always;
 }

@@ -69,6 +69,8 @@ function setPageSize() {
     const [widthMm, heightMm] = PAPER_SIZES[paperSize][orientation];
     document.documentElement.style.setProperty('--page-width', widthMm + 'mm');
     document.documentElement.style.setProperty('--page-height', heightMm + 'mm');
+    document.getElementById('print-page-style').textContent =
+        `@media print { @page { size: ${paperSize} ${orientation}; margin: ${PRINT_MARGIN}mm; } }`;
 }
 
 function generateWatermarks() {
@@ -129,11 +131,8 @@ function generateWatermarks() {
             ? `${padNumber(index + 1, maxDigits)} ${line.trim()}`
             : line.trim();
 
-        // 保留空格和Tab
-        const htmlText = text.replace(/ /g, '&nbsp;').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
-
         // 测量文字尺寸
-        measureDiv.innerHTML = htmlText;
+        measureDiv.textContent = text;
         const textWidthPx = measureDiv.offsetWidth;
         const textHeightPx = fontSize;
 
@@ -172,7 +171,7 @@ function generateWatermarks() {
             for (let col = 0; col < cols; col++) {
                 const watermark = document.createElement('div');
                 watermark.className = 'watermark';
-                watermark.innerHTML = htmlText;
+                watermark.textContent = text;
 
                 // 计算位置 (基于用户设置的间距)
                 const x = col * gapXPx;

@@ -93,6 +93,15 @@ let vm = createApp({
                 return;
             }
 
+            arrangedRooms.value.forEach(room => {
+                room.students.forEach(student => {
+                    if (typeof student.photo === 'string' && student.photo.startsWith('blob:')) {
+                        URL.revokeObjectURL(student.photo);
+                    }
+                    student.photo = "";
+                });
+            });
+
             // 创建照片文件名到File对象的映射，去除文件扩展名
             const photoMap = new Map();
             picFileList.value.forEach(file => {
@@ -108,10 +117,6 @@ let vm = createApp({
             arrangedRooms.value.forEach(room => {
                 if (room.students && room.students.length > 0) {
                     room.students.forEach(student => {
-                        if (student.photo) {
-                            return; // 已经有照片了，跳过
-                        }
-
                         let matchedPhoto = null;
 
                         // 尝试用准考证号匹配
@@ -172,6 +177,14 @@ let vm = createApp({
             if (!files || files.length === 0) {
                 picFolderName.value = "";
                 picFileList.value = [];
+                arrangedRooms.value.forEach(room => {
+                    room.students.forEach(student => {
+                        if (typeof student.photo === 'string' && student.photo.startsWith('blob:')) {
+                            URL.revokeObjectURL(student.photo);
+                        }
+                        student.photo = "";
+                    });
+                });
                 event.target.value = ""; // 清空，保证能重复选择同一个文件夹
                 return;
             }
@@ -625,7 +638,7 @@ let vm = createApp({
 
             let roomsObj = {};
             roomsCopy.forEach(room => {
-                let key = `${room.schoolId}||${room.typeId}}`;
+                let key = `${room.schoolId}||${room.typeId}`;
                 if (!roomsObj[key]) {
                     roomsObj[key] = [];
                 }
@@ -634,9 +647,10 @@ let vm = createApp({
 
             // 遍历学生，依次安排到对应的考场
             studentCopy.forEach(student => {
-                let key = `${student.schoolId || ""}||${student.typeId || ""}}`;
+                let key = `${student.schoolId || ""}||${student.typeId || ""}`;
                 let candidateRooms = roomsObj[key];
                 if (candidateRooms && candidateRooms.length > 0) {
+                    let assigned = false;
                     // 找到一个未满员的考场
                     for (let room of candidateRooms) {
                         if (room.students.length < room.capacity) {
@@ -645,10 +659,13 @@ let vm = createApp({
                             student.seatNo = room.students.length + 1;
 
                             room.students.push(student);
+                            assigned = true;
                             break;
                         }
                     }
-
+                    if (!assigned) {
+                        addMessage("warning", `考点 ${student.schoolName} (${student.schoolId})，类别 ${student.typeName} (${student.typeId}) 的考场已满，无法安排学生 ${student.name} (${student.ksh})`);
+                    }
                 } else {
                     addMessage("warning", `未找到考点 ${student.schoolName} (${student.schoolId})，类别 ${student.typeName} (${student.typeId}) 的考场，无法安排该学生 ${student.name} (${student.ksh})`);
                 }
@@ -687,7 +704,7 @@ let vm = createApp({
             if (!room || !Array.isArray(room.students)) {
                 return [];
             }
-            const chunkSize = 6;
+            const chunkSize = 5;
             const chunks = [];
             for (let i = 0; i < room.students.length; i += chunkSize) {
                 chunks.push(room.students.slice(i, i + chunkSize));
@@ -1014,5 +1031,3 @@ let vm = createApp({
 // noinspection JSUnresolvedReference
 let vmm = vm.mount("#exam-rooms-arrange");
 window.examRoomArrangeApp = vmm;
-
-

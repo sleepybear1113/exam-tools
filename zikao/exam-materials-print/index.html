@@ -62,12 +62,28 @@
             display: none !important;
         }
 
+        #qwe > :not(style, #envelop, #door) {
+            display: none !important;
+        }
+
         .no-print {
             display: none !important;
         }
 
         .print {
             display: block !important;
+        }
+
+        #envelop > div,
+        #door > div {
+            break-after: page;
+            page-break-after: always;
+        }
+
+        #envelop > div:last-of-type,
+        #door > div:last-of-type {
+            break-after: auto;
+            page-break-after: auto;
         }
     }
 
@@ -79,7 +95,7 @@
 </style>
 <body>
 <div id="qwe">
-    <component :is="'style'" v-if="showTemplate === 'door'">
+    <component :is="'style'">
         @media print {
             @page { size: landscape; margin: 1cm; }
         }
@@ -157,7 +173,7 @@
 
     <div id="envelop" v-show="showTemplate === 'envelop'">
         <template v-for="(subjectGroup, index) in subjectGroupList" :key="index">
-            <div :style="`margin-top: ${envelopConfig.top}px; margin-left: ${envelopConfig.left}px; page-break-after:always; width: 600px;` ">
+            <div :style="`margin-top: ${envelopConfig.top}px; margin-left: ${envelopConfig.left}px; width: 600px;` ">
                 <table :style="`margin-top: -${subjectGroup.subjects.length * 20}px` ">
                     <caption class="print-title">{{title}}</caption>
                     <tbody>
@@ -194,7 +210,7 @@
     <!-- 场标 -->
     <div id="door" v-show="showTemplate === 'door'">
         <template v-for="(subjectGroup, index) in subjectGroupList" :key="index">
-            <div style="margin-top: 50px; page-break-after:always">
+            <div style="margin-top: 50px">
                 <table :style="`margin-top: ${-subjectGroup.subjects.length * 35 + 150}px` ">
                     <caption class="print-title">{{title}}</caption>
                     <tbody>
@@ -295,7 +311,16 @@ Vue.createApp({
             loadMarginConfig() {
                 let config = localStorage.getItem(envelopConfigKey);
                 if (config) {
-                    this.envelopConfig = JSON.parse(config);
+                    try {
+                        const savedConfig = JSON.parse(config);
+                        const left = Number(savedConfig.left);
+                        const top = Number(savedConfig.top);
+                        if (Number.isFinite(left) && Number.isFinite(top)) {
+                            this.envelopConfig = {left, top};
+                        }
+                    } catch (error) {
+                        localStorage.removeItem(envelopConfigKey);
+                    }
                 }
             },
             parseSubject() {
@@ -330,6 +355,13 @@ Vue.createApp({
                     }
                 }
 
+                const requiredColumns = ["序号", "考场序号", "课程代码", "课程名称", "考点", "人数", "考试时间"];
+                const missingColumns = requiredColumns.filter(column => indexObj[column] === undefined);
+                if (missingColumns.length > 0) {
+                    alert(`缺少必需列：${missingColumns.join("、")}`);
+                    return;
+                }
+
                 let subjects = [];
                 for (let i = 1; i < lines.length; i++) {
                     let string = lines[i];
@@ -337,6 +369,14 @@ Vue.createApp({
                         continue;
                     }
                     let parts = string.split('\t');
+                    const missingValues = requiredColumns.filter(column => {
+                        const value = parts[indexObj[column]];
+                        return value === undefined || String(value).trim() === "";
+                    });
+                    if (missingValues.length > 0) {
+                        alert(`第 ${i + 1} 行缺少必填内容：${missingValues.join("、")}`);
+                        return;
+                    }
                     let subject = {
                         序号: parts[indexObj.序号],
                         考点: parts[indexObj.考点],
@@ -347,6 +387,11 @@ Vue.createApp({
                         考试时间号: parts[indexObj.考试时间号],
                         人数: parts[indexObj.人数],
                     };
+                    const count = Number(subject.人数);
+                    if (!Number.isFinite(count)) {
+                        alert(`第 ${i + 1} 行“人数”必须为数字`);
+                        return;
+                    }
                     subjects.push(new Subject(subject));
                 }
 
@@ -366,10 +411,9 @@ Vue.createApp({
                         subjectGroupMap[key] = subjectGroup;
                         subjectGroupMapList.push(subjectGroup);
                     }
-                    subjectGroupMap[key].总人数 += parseInt(subject.人数);
+                    subjectGroupMap[key].总人数 += Number(subject.人数);
                     subjectGroupMap[key].subjects.push(subject);
                 }
-                console.log(subjectGroupMapList);
                 this.subjectGroupList = subjectGroupMapList;
             },
             showSample() {

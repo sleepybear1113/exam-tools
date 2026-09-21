@@ -149,7 +149,7 @@
                 </table>
 
                 <hr class="no-print-element">
-                <div style="page-break-after:always;" v-if="index < arrangedRooms.length - 1"></div>
+                <div class="print-page-break" v-if="index < arrangedRooms.length - 1"></div>
             </div>
         </div>
 
@@ -191,7 +191,7 @@
             </div>
 
             <!-- 准考证内容 -->
-            <div v-for="sameStudentGroup in sortedSameStudentGroupList" :key="`ticket-${sameStudentGroup.ksh}`"
+            <div v-for="(sameStudentGroup, ticketIndex) in sortedSameStudentGroupList" :key="`ticket-${sameStudentGroup.ksh}`"
                  :class="['ticket-container', picShown ? 'with-photo' : 'no-photo']">
                 <!-- 准考证标题 -->
                 <div class="ticket-header">
@@ -259,11 +259,11 @@
                 <!-- 考生必读 -->
                 <div v-if="examNotice" class="ticket-notice">
                     <h4 class="notice-title">考生必读</h4>
-                    <div class="notice-content" v-html="examNotice.replace(/\n/g, '<br>')"></div>
+                    <div class="notice-content">{{ examNotice }}</div>
                 </div>
 
                 <!-- 分页符 -->
-                <div style="page-break-after: always;"></div>
+                <div class="print-page-break" v-if="ticketIndex < sortedSameStudentGroupList.length - 1"></div>
             </div>
 
         </div>

@@ -303,6 +303,7 @@ function buildComboColumns() {
     let resultRows = [];
     let currentMode = 'table';
     let lastDataset = null; // { type: 'xuexuan' | 'gaokao', rows, headerSet }
+    let processingSequence = 0;
 
     const COMBO_SPECS = buildComboSpecs();
     const COMBO_KEY_MAP = buildComboKeyMap(COMBO_SPECS);
@@ -421,6 +422,8 @@ function buildComboColumns() {
     }
 
     function clearResults() {
+        processingSequence++;
+        hideLoading();
         resultColumns = [];
         resultRows = [];
         lastDataset = null;
@@ -540,18 +543,27 @@ function buildComboColumns() {
 
     async function processCurrentDataset(startTime) {
         if (!lastDataset) return;
+        const sequence = ++processingSequence;
+        const dataset = lastDataset;
         const startedAt = typeof startTime === 'number' ? startTime : performance.now();
         showLoading('正在统计数据…');
-        await nextFrame();
-        const {type} = lastDataset;
-        if (type === 'xuexuan') {
-            const result = await aggregateXuexuan(lastDataset);
-            applyResult(result, startedAt);
-        } else if (type === 'gaokao') {
-            const result = await aggregateGaokao(lastDataset);
-            applyResult(result, startedAt);
+        try {
+            await nextFrame();
+            const {type} = dataset;
+            let result;
+            if (type === 'xuexuan') {
+                result = await aggregateXuexuan(dataset);
+            } else if (type === 'gaokao') {
+                result = await aggregateGaokao(dataset);
+            }
+            if (sequence === processingSequence && result) {
+                applyResult(result, startedAt);
+            }
+        } finally {
+            if (sequence === processingSequence) {
+                hideLoading();
+            }
         }
-        hideLoading();
     }
 
     function applyResult(result, startTime) {
@@ -1156,4 +1168,3 @@ function buildComboColumns() {
         return activeComboSpecs.map(spec => ({key: spec.key, label: spec.label}));
     }
 })();
-

@@ -78,6 +78,10 @@ class Student {
         // 裸眼视力校验
         for (let eye of this.eyes) {
             const {name, val, jzsl, jzds} = eye;
+            if (!Number.isFinite(val)) {
+                pushError(`裸眼视力(${name}眼)缺失或不是有效数字`, name === '右' ? this.YK_LYSLY : this.YK_LYSLZ);
+                continue;
+            }
             if (val === 0 || val < 4.0 || val > 5.4) pushError(`裸眼视力(${name}眼)偏离正常值(4.0-5.4)`, val);
 
             if (val < 5.0 && this.TJSXBZ[4] !== '1') pushError(`${name}眼视力低于5.0，但体检受限标志(第5位)不匹配`, this.TJSXBZ);
@@ -110,8 +114,10 @@ class Student {
         }
 
         // 血压校验
-        if (this.ss < 80 || this.ss > 160) pushError("收缩压偏离正常值较大", this.ss);
-        if (this.sz < 50 || this.sz > 110) pushError("舒张压偏离正常值较大", this.sz);
+        if (!Number.isFinite(this.ss)) pushError("收缩压缺失或不是有效数字", this.NK_XYSSY);
+        else if (this.ss < 80 || this.ss > 160) pushError("收缩压偏离正常值较大", this.ss);
+        if (!Number.isFinite(this.sz)) pushError("舒张压缺失或不是有效数字", this.NK_XYSZY);
+        else if (this.sz < 50 || this.sz > 110) pushError("舒张压偏离正常值较大", this.sz);
 
         // 身高体重校验
         let minBmi = 14.5, maxBmi = 40;
@@ -127,12 +133,19 @@ class Student {
             maxTz = 100; // 女生体重上限稍低
         }
 
-        if (this.bmi < minBmi || this.bmi > maxBmi) pushError("BMI指数偏离正常范围", this.bmi.toFixed(2) + " (身高:" + this.sg + ", 体重:" + this.tz + ")");
-        if (this.sg < minSg || this.sg > maxSg) pushError("身高偏离正常值较大", this.sg);
-        if (this.tz < minTz || this.tz > maxTz) pushError("体重偏离正常值过大", this.tz);
+        if (!Number.isFinite(this.sg)) pushError("身高缺失或不是有效数字", this.WK_SG);
+        if (!Number.isFinite(this.tz)) pushError("体重缺失或不是有效数字", this.WK_TZ);
+        if (Number.isFinite(this.sg) && Number.isFinite(this.tz)) {
+            if (this.bmi < minBmi || this.bmi > maxBmi) pushError("BMI指数偏离正常范围", this.bmi.toFixed(2) + " (身高:" + this.sg + ", 体重:" + this.tz + ")");
+            if (this.sg < minSg || this.sg > maxSg) pushError("身高偏离正常值较大", this.sg);
+            if (this.tz < minTz || this.tz > maxTz) pushError("体重偏离正常值过大", this.tz);
+        }
 
         // 听力检查
-        if ((this.etlL < 3 && this.etlR < 3) || (this.etlL === 5 && this.etlR === 0) || (this.etlR === 5 && this.etlL === 0)) {
+        if (!Number.isFinite(this.etlL)) pushError("左耳听力缺失或不是有效数字", this.EB_ZETL);
+        if (!Number.isFinite(this.etlR)) pushError("右耳听力缺失或不是有效数字", this.EB_YETL);
+        if (Number.isFinite(this.etlL) && Number.isFinite(this.etlR) &&
+            ((this.etlL < 3 && this.etlR < 3) || (this.etlL === 5 && this.etlR === 0) || (this.etlR === 5 && this.etlL === 0))) {
             if (this.TJSXBZ[13] !== '1') pushError("听力检查异常，但体检受限标志(第14位)不匹配", this.TJSXBZ);
         }
 

@@ -259,6 +259,10 @@ textarea:focus {
     margin: 0 auto 15px;
 }
 
+.watermark {
+    white-space: pre;
+}
+
 @keyframes spin {
     0% {
         transform: rotate(0deg);
@@ -270,8 +274,7 @@ textarea:focus {
 
 @media print {
     @page {
-        margin: 5mm !important;
-        size: auto;
+        margin: 5mm;
     }
 
     .page {
@@ -280,15 +283,15 @@ textarea:focus {
         border: none !important;
         box-shadow: none !important;
         border-radius: 0 !important;
+        break-after: page !important;
         page-break-after: always !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
     }
 
     .page:last-child {
-        page-break-after: avoid !important;
+        break-after: auto !important;
+        page-break-after: auto !important;
     }
 
     body {
@@ -297,6 +300,14 @@ textarea:focus {
         background: white !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+    }
+
+    body > *:not(#watermark-app) {
+        display: none !important;
+    }
+
+    #watermark-app > :not(#preview) {
+        display: none !important;
     }
 
     .container {

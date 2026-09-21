@@ -281,7 +281,7 @@
 			});
 			els.tbody.appendChild(tr);
 		});
-		const hasData = sourceRows.length > 0;
+		const hasData = processedRows.length > 0;
 		els.btnExportAll.disabled = !hasData;
 		els.btnExportZip.disabled = !hasData;
 
@@ -428,10 +428,17 @@ function updateBmdFilterUI() {
 		const id = `bmd_${Math.random().toString(36).substr(2, 9)}`;
 		const checked = pendingSelectedBmds.has(bmd);
 		const count = bmdCounts[bmd] || 0;
-		div.innerHTML = `
-			<input class="form-check-input bmd-checkbox" type="checkbox" value="${bmd}" id="${id}" ${checked ? 'checked' : ''}>
-			<label class="form-check-label" for="${id}">${bmd}(${count})</label>
-		`;
+		const input = document.createElement('input');
+		input.className = 'form-check-input bmd-checkbox';
+		input.type = 'checkbox';
+		input.value = bmd;
+		input.id = id;
+		input.checked = checked;
+		const label = document.createElement('label');
+		label.className = 'form-check-label';
+		label.htmlFor = id;
+		label.textContent = `${bmd}(${count})`;
+		div.append(input, label);
 		els.bmdList.appendChild(div);
 	});
 }
@@ -629,5 +636,3 @@ function updateBmdFilterUI() {
 	initDateSelectors();
 	wireEvents();
 })();
-
-

@@ -143,7 +143,10 @@ const app = createApp({
             };
 
             worker.onerror = (error) => {
+                this.processing = false;
                 worker.terminate();
+                console.error('Error processing DBF file:', error);
+                alert('文件损坏或格式不正确，无法读取 DBF 数据');
             };
 
             worker.postMessage({file});
