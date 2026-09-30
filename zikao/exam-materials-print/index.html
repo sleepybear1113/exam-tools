@@ -57,12 +57,23 @@
         break-inside: avoid;
     }
 
+    @page {
+        size: A4 landscape;
+        page-orientation: rotate-right;
+        margin: 0;
+    }
+
     @media print {
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
         body > *:not(#qwe) {
             display: none !important;
         }
 
-        #qwe > :not(style, #envelop, #door) {
+        #qwe > :not(#envelop, #door) {
             display: none !important;
         }
 
@@ -78,12 +89,30 @@
         #door > div {
             break-after: page;
             page-break-after: always;
+            margin-bottom: 0 !important;
         }
 
         #envelop > div:last-of-type,
         #door > div:last-of-type {
             break-after: auto;
             page-break-after: auto;
+        }
+
+        #envelop thead,
+        #door thead {
+            display: table-header-group;
+        }
+
+        #envelop tr,
+        #door tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        #envelop,
+        #door {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
     }
 
@@ -95,12 +124,6 @@
 </style>
 <body>
 <div id="qwe">
-    <component :is="'style'">
-        @media print {
-            @page { size: landscape; margin: 1cm; }
-        }
-    </component>
-
     <div id="input" class="no-print container-fluid py-4">
         <div class="card shadow-sm mb-4" style="max-width: 1200px; margin: 0 auto;">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
@@ -127,6 +150,7 @@
                                 <li>保留标题行，必须包含：<strong>序号、考场序号、课程代码、课程名称、考点、人数、考试时间</strong>（、考试时间号，可选）。</li>
                                 <li>程序会自动按【考点 + 考试时间 + 序号】进行分组。</li>
                                 <li>若有多余字段，程序将自动忽略。所以请放心将 Excel 内容全选，而不用只选择上述几列。</li>
+                                <li class="text-danger"><strong>打印设置（重要）：</strong>Chrome 请将「边距」设为「无」、「缩放」设为 100%、关闭「页眉和页脚」；Firefox 请选择「横向」纸张、边距设为 0、关闭页眉页脚。若信封表格与信封窗口对不齐，请调整上方「左边距/上边距」并点击「保存边距设置」重新校准。</li>
                             </ul>
                         </div>
                         
@@ -176,7 +200,7 @@
             <div :style="`margin-top: ${envelopConfig.top}px; margin-left: ${envelopConfig.left}px; width: 600px;` ">
                 <table :style="`margin-top: -${subjectGroup.subjects.length * 20}px` ">
                     <caption class="print-title">{{title}}</caption>
-                    <tbody>
+                    <thead>
                     <tr>
                         <td>序号</td>
                         <td>考场序号</td>
@@ -185,6 +209,8 @@
                         <td>考点</td>
                         <td>人数</td>
                     </tr>
+                    </thead>
+                    <tbody>
 
                     <tr v-for="(subject, sIndex) in subjectGroup.subjects" :key="sIndex">
                         <td style="width: 40px">{{subject.序号}}</td>
@@ -213,7 +239,7 @@
             <div style="margin-top: 50px">
                 <table :style="`margin-top: ${-subjectGroup.subjects.length * 35 + 150}px` ">
                     <caption class="print-title">{{title}}</caption>
-                    <tbody>
+                    <thead>
                     <tr>
                         <td>序号</td>
                         <td>考场序号</td>
@@ -221,6 +247,8 @@
                         <td>课程名称</td>
                         <td>考点</td>
                     </tr>
+                    </thead>
+                    <tbody>
 
                     <tr v-for="(subject, sIndex) in subjectGroup.subjects" :key="sIndex">
                         <td style="width: 100px; height: 60px">{{subject.序号}}</td>

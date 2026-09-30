@@ -96,7 +96,9 @@ hr {
         display: none !important;
     }
 
-    #app-exam-materials-print > *:not(.print-output) {
+    /* 只隐藏控制面板，保留打印内容容器（.print-output 类在页面中并不存在于内容容器上，
+       原写法会把内容一起隐藏导致打印空白页） */
+    #app-exam-materials-print > .no-print {
         display: none !important;
     }
 
