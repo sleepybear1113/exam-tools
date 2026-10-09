@@ -52,6 +52,12 @@
         font-size: 30pt;
     }
 
+    /* 加粗开关：作用于整个场贴模板 */
+    #door.no-bold td,
+    #door.no-bold .print-title {
+        font-weight: normal;
+    }
+
     #envelop > div, #door > div {
         page-break-inside: avoid;
         break-inside: avoid;
@@ -193,6 +199,25 @@
                 <button class="btn btn-sm btn-outline-primary" @click="saveMarginConfig">保存边距设置</button>
             </div>
         </div>
+
+        <div id="door001" v-show="showTemplate === 'door'" class="no-print">
+            <div class="d-flex justify-content-center align-items-center flex-wrap gap-3 py-2 bg-light border-bottom mb-4">
+                <div class="d-flex align-items-center gap-1">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="doorFixedWrap" v-model="doorConfig.fixedWrap">
+                        <label class="form-check-label" for="doorFixedWrap">是否指定字符数量</label>
+                    </div>
+                    <input type="number" v-model.number="doorConfig.charsPerLine" min="1" step="1"
+                           class="form-control form-control-sm" style="width: 70px" :disabled="!doorConfig.fixedWrap">
+                    <span>换行</span>
+                </div>
+                <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" id="doorBold" v-model="doorConfig.bold">
+                    <label class="form-check-label" for="doorBold">是否加粗字体</label>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" @click="saveDoorConfig">保存场贴设置</button>
+            </div>
+        </div>
     </div>
 
     <div id="envelop" v-show="showTemplate === 'envelop'">
@@ -234,7 +259,7 @@
     </div>
 
     <!-- 场标 -->
-    <div id="door" v-show="showTemplate === 'door'">
+    <div id="door" :class="{ 'no-bold': !doorConfig.bold }" v-show="showTemplate === 'door'">
         <template v-for="(subjectGroup, index) in subjectGroupList" :key="index">
             <div style="margin-top: 50px">
                 <table :style="`margin-top: ${-subjectGroup.subjects.length * 35 + 150}px` ">
@@ -254,7 +279,11 @@
                         <td style="width: 100px; height: 60px">{{subject.序号}}</td>
                         <td style="width: 140px">{{subject.考场序号}}</td>
                         <td style="width: 120px">{{subject.课程代码}}</td>
-                        <td style="width: 400px">{{subject.课程名称}}</td>
+                        <td style="width: 400px">
+                            <div :style="courseStyle(subject.课程名称)">
+                                <div v-for="(line, li) in courseLines(subject.课程名称)" :key="li">{{ line }}</div>
+                            </div>
+                        </td>
                         <td style="width: 120px">{{subject.考点}}</td>
                     </tr>
 
@@ -272,6 +301,7 @@
 
 <script>
     let envelopConfigKey = "envelopConfig-48961";
+    let doorConfigKey = "doorConfig-48961";
     class Subject {
         constructor(props = {}) {
             this.id = props.id;
@@ -323,10 +353,16 @@ Vue.createApp({
                 top: 350,
             },
             showTemplate: "envelop",
+            doorConfig: {
+                fixedWrap: true,
+                charsPerLine: 14,
+                bold: true,
+            },
         };
     },
     created() {
         this.loadMarginConfig();
+        this.loadDoorConfig();
     },
 
     methods: {
@@ -350,6 +386,67 @@ Vue.createApp({
                         localStorage.removeItem(envelopConfigKey);
                     }
                 }
+            },
+            saveDoorConfig() {
+                localStorage.setItem(doorConfigKey, JSON.stringify(this.doorConfig));
+            },
+            loadDoorConfig() {
+                let config = localStorage.getItem(doorConfigKey);
+                if (config) {
+                    try {
+                        const saved = JSON.parse(config);
+                        const charsPerLine = Number(saved.charsPerLine);
+                        this.doorConfig = {
+                            fixedWrap: saved.fixedWrap !== false,
+                            charsPerLine: Number.isFinite(charsPerLine) && charsPerLine > 0 ? charsPerLine : 14,
+                            bold: saved.bold !== false,
+                        };
+                    } catch (error) {
+                        localStorage.removeItem(doorConfigKey);
+                    }
+                }
+            },
+            // 每行字数（未启用指定换行时返回 0，表示交给浏览器自然折行）
+            doorCharsPerLine() {
+                if (!this.doorConfig.fixedWrap) {
+                    return 0;
+                }
+                const x = Math.floor(Number(this.doorConfig.charsPerLine));
+                return Number.isFinite(x) && x > 0 ? x : 0;
+            },
+            // 将课程名称按指定字符数切分为多行
+            courseLines(name) {
+                const text = name == null ? "" : String(name);
+                const x = this.doorCharsPerLine();
+                if (!x) {
+                    return [text];
+                }
+                const chars = Array.from(text);
+                if (chars.length === 0) {
+                    return [""];
+                }
+                const lines = [];
+                for (let i = 0; i < chars.length; i += x) {
+                    lines.push(chars.slice(i, i + x).join(""));
+                }
+                return lines;
+            },
+            // 计算课程名称的动态字号（加粗由 #door 容器统一控制）
+            courseStyle(name) {
+                const style = { textAlign: "center" };   // 始终保持居中
+                const x = this.doorCharsPerLine();
+                if (x) {
+                    const text = name == null ? "" : String(name);
+                    const len = Math.max(1, Array.from(text).length);
+                    const perLine = Math.min(len, x);
+                    const cellWidth = 380;   // px，单元格可用宽度（略小于 400 以留出边距）
+                    const maxFontPt = 30;    // 字号上限：超过 30 磅直接以 30 磅为准
+                    const fontPx = cellWidth / perLine;
+                    const fontPt = Math.min(maxFontPt, fontPx / 1.3333);
+                    style.fontSize = fontPt.toFixed(2) + "pt";
+                    style.lineHeight = "1.15";
+                }
+                return style;
             },
             parseSubject() {
                 if (!this.inputString) {
