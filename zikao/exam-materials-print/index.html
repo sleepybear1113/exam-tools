@@ -153,8 +153,8 @@
                             <h6 class="alert-heading fw-bold mb-2">使用说明：</h6>
                             <ul class="small mb-0 ps-3">
                                 <li>左侧输入框请从 Excel 中复制然后粘贴。</li>
-                                <li>保留标题行，必须包含：<strong>序号、考场序号、课程代码、课程名称、考点、人数、考试时间</strong>（、考试时间号，可选）。</li>
-                                <li>程序会自动按【考点 + 考试时间 + 序号】进行分组。</li>
+                                <li>保留标题行，必须包含：<strong>序号、考场序号、课程代码、课程名称、人数、考试时间</strong>（考点、考试时间号可选）。</li>
+                                <li>程序会自动按【考点（如有）+ 考试时间 + 序号】进行分组。</li>
                                 <li>若有多余字段，程序将自动忽略。所以请放心将 Excel 内容全选，而不用只选择上述几列。</li>
                                 <li class="text-danger"><strong>打印设置（重要）：</strong>Chrome 请将「边距」设为「无」、「缩放」设为 100%、关闭「页眉和页脚」；Firefox 请选择「横向」纸张、边距设为 0、关闭页眉页脚。若信封表格与信封窗口对不齐，请调整上方「左边距/上边距」并点击「保存边距设置」重新校准。</li>
                             </ul>
@@ -231,7 +231,7 @@
                         <td>考场序号</td>
                         <td>课程代码</td>
                         <td>课程名称</td>
-                        <td>考点</td>
+                        <td v-if="hasExamSite">考点</td>
                         <td>人数</td>
                     </tr>
                     </thead>
@@ -242,12 +242,12 @@
                         <td style="width: 80px">{{subject.考场序号}}</td>
                         <td style="width: 70px">{{subject.课程代码}}</td>
                         <td style="width: 200px">{{subject.课程名称}}</td>
-                        <td style="width: 60px">{{subject.考点}}</td>
+                        <td v-if="hasExamSite" style="width: 60px">{{subject.考点}}</td>
                         <td style="width: 40px">{{subject.人数}}</td>
                     </tr>
 
                     <tr>
-                        <td colspan="5">{{subjectGroup.考试时间号}}{{subjectGroup.考试时间}}</td>
+                        <td :colspan="hasExamSite ? 5 : 4">{{subjectGroup.考试时间号}}{{subjectGroup.考试时间}}</td>
                         <td colspan="1">{{subjectGroup.总人数 ? subjectGroup.总人数 : ""}}</td>
                     </tr>
 
@@ -270,7 +270,7 @@
                         <td>考场序号</td>
                         <td>课程<br>代码</td>
                         <td>课程名称</td>
-                        <td>考点</td>
+                        <td v-if="hasExamSite">考点</td>
                     </tr>
                     </thead>
                     <tbody>
@@ -284,11 +284,11 @@
                                 <div v-for="(line, li) in courseLines(subject.课程名称)" :key="li">{{ line }}</div>
                             </div>
                         </td>
-                        <td style="width: 120px">{{subject.考点}}</td>
+                        <td v-if="hasExamSite" style="width: 120px">{{subject.考点}}</td>
                     </tr>
 
                     <tr v-if="subjectGroup.考试时间">
-                        <td colspan="5">{{subjectGroup.考试时间}}</td>
+                        <td :colspan="hasExamSite ? 5 : 4">{{subjectGroup.考试时间}}</td>
                     </tr>
 
                     </tbody>
@@ -347,6 +347,7 @@ Vue.createApp({
         return {
             subjectGroupList: [],
             inputString: "",
+            hasExamSite: false,
             title: `${new Date().getFullYear()}年${new Date().getMonth() < 6 ? '上半年' : '下半年'}高等教育自学考试`,
             envelopConfig: {
                 left: 410,
@@ -480,12 +481,13 @@ Vue.createApp({
                     }
                 }
 
-                const requiredColumns = ["序号", "考场序号", "课程代码", "课程名称", "考点", "人数", "考试时间"];
+                const requiredColumns = ["序号", "考场序号", "课程代码", "课程名称", "人数", "考试时间"];
                 const missingColumns = requiredColumns.filter(column => indexObj[column] === undefined);
                 if (missingColumns.length > 0) {
                     alert(`缺少必需列：${missingColumns.join("、")}`);
                     return;
                 }
+                this.hasExamSite = indexObj.考点 !== undefined;
 
                 let subjects = [];
                 for (let i = 1; i < lines.length; i++) {
