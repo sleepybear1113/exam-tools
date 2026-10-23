@@ -31,7 +31,7 @@ let vm = createApp({
         const tab = ref("核对单");
 
         const picShown = ref(true);
-        const hideIdCard = ref(false);
+        const hideIdCard = ref(true);
         const hideType = ref(false);
         const deskLabelBorderMode = ref("horizontal");
         const deskLabelGap = ref(25);
@@ -712,6 +712,34 @@ let vm = createApp({
             return chunks;
         }
 
+        // 带照片核对单按物理页拆分：每行 5 人，每页最多 6 行。
+        // 保留原考场和学生引用，分页不改变考场容量、学生顺序或座位号。
+        const photoChecklistPages = computed(() => {
+            const studentsPerPage = 5 * 6;
+            const pages = [];
+
+            arrangedRooms.value.forEach((room, roomIndex) => {
+                const students = room.students || [];
+                const totalPages = Math.ceil(students.length / studentsPerPage);
+                for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+                    const pageStudents = students.slice(
+                        pageIndex * studentsPerPage, (pageIndex + 1) * studentsPerPage
+                    );
+                    pages.push({
+                        // 编排后的 room.id 可能为空，使用考场下标区分不同考场。
+                        key: `${roomIndex}-${pageIndex}`,
+                        room,
+                        pageIndex,
+                        totalPages,
+                        students: pageStudents,
+                        rows: chunkStudents({students: pageStudents}),
+                    });
+                }
+            });
+
+            return pages;
+        });
+
         // 相同学生分组列表（使用Computed自动计算）
         const sameStudentGroupList = computed(() => {
             if (!arrangedRooms.value || arrangedRooms.value.length === 0) {
@@ -1017,6 +1045,7 @@ let vm = createApp({
             arrangeStuIntoRooms,
             getRoomRows,
             chunkStudents,
+            photoChecklistPages,
             sameStudentGroupList,
             deskLabelPages,
             // 准考证排序相关

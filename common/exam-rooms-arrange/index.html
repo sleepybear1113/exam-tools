@@ -73,8 +73,9 @@
         </div>
     </div>
 
-    <!--A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm-->
-    <div class="main a4-paper" v-if="arrangedRooms.length > 0">
+    <!-- A4 公共容器，各打印视图分别设置分页与页面内边距。 -->
+    <div class="main a4-paper" :class="{'photo-checklist-print': tab === '核对单' && picShown}"
+         v-if="arrangedRooms.length > 0">
         <div v-if="tab === '核对单'">
             <div class="no-print">
                 <h3 class="middle exam-title">核对单</h3>
@@ -90,67 +91,88 @@
                 </div>
             </div>
 
-            <div v-for="(room, index) in arrangedRooms" :key="room.id">
-                <div class="middle hdd-header">
-                    <h4 class="middle exam-title" style="text-align: center">{{examName}}</h4>
-                    <h5 class="hdd-header-line1">
-                        <span class="hdd-left">{{ room.schoolName }}</span>
-                        <span class="hdd-center">{{ room.typeId }} {{ room.typeName}} {{ room.name }}</span>
-                        <span class="hdd-right">考场号：{{ room.roomName}}({{ room.students.length }}人)</span>
-                    </h5>
-                    <h5 class="hdd-header-line2">
-                        <span class="hdd-left">考试时间：{{ room.time }}</span>
-                        <span class="hdd-right">监考教师：____________________</span>
-                    </h5>
-                </div>
-                <table v-if="picShown" class="hdd-table">
-                    <tr v-for="(row, rowIndex) in chunkStudents(room)" :key="rowIndex" class="room-row">
-                        <td v-for="student in row" :key="student.ksh" class="student-cell">
-                            <div class="student-info">
-                                <div v-if="picShown" class="photo-container">
-                                    <img :src="student.photo || emptyPng" alt="照片" class="photo">
+            <div v-if="picShown" class="photo-checklist-pages">
+                <section v-for="page in photoChecklistPages" :key="page.key" class="photo-checklist-page">
+                    <div class="middle hdd-header">
+                        <h4 class="middle exam-title" style="text-align: center">{{ examName }}</h4>
+                        <h5 class="hdd-header-line1">
+                            <span class="hdd-left">{{ page.room.schoolName }}</span>
+                            <span class="hdd-center">{{ page.room.typeId }} {{ page.room.typeName }} {{ page.room.name }}</span>
+                            <span class="hdd-right">
+                                考场号：{{ page.room.roomName }}({{ page.room.students.length }}人)
+                                <span class="hdd-page-number">{{ page.pageIndex + 1 }}/{{ page.totalPages }}</span>
+                            </span>
+                        </h5>
+                        <h5 class="hdd-header-line2">
+                            <span class="hdd-left">考试时间：{{ page.room.time }}</span>
+                            <span class="hdd-right">监考教师：____________________</span>
+                        </h5>
+                    </div>
+                    <table class="hdd-table">
+                        <tbody>
+                        <tr v-for="(row, rowIndex) in page.rows" :key="rowIndex" class="room-row">
+                            <td v-for="(student, studentIndex) in row" :key="studentIndex" class="student-cell">
+                                <div class="student-info" :class="{'four-line-info': hideIdCard}">
+                                    <div class="photo-container">
+                                        <img :src="student.photo || emptyPng" alt="照片" class="photo">
+                                    </div>
+                                    <div class="info-text">
+                                        <p>{{ student.ksh }}</p>
+                                        <p class="id-text-font" v-if="!hideIdCard">{{ student.idCard }}</p>
+                                        <p>姓名：{{ student.name }}</p>
+                                        <p>座位号: {{ student.seatNo }}</p>
+                                        <p>签名</p>
+                                    </div>
                                 </div>
-                                <div class="info-text">
-                                    <p>准考证号：{{ student.ksh }}</p>
-                                    <p class="id-text-font" v-if="!hideIdCard">{{ student.idCard }}</p>
-                                    <p>姓名：{{ student.name }}</p>
-                                    <p>座位号: {{ student.seatNo }}</p>
-                                    <p>签名</p>
-                                </div>
-                            </div>
-                        </td>
-                        <template v-if="row.length < 5">
-                            <td v-for="n in (5 - row.length)" :key="`empty-${rowIndex}-${n}`" class="student-cell"></td>
-                        </template>
-                    </tr>
-                </table>
-
-                <table v-if="!picShown" class="checklist-table">
-                    <thead>
-                    <tr>
-                        <th>序号</th>
-                        <th v-if="!hideIdCard">身份证号</th>
-                        <th>准考证号</th>
-                        <th>座位号</th>
-                        <th>姓名</th>
-                        <th>考生签名</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr v-for="(student, index) in room.students" :key="student.ksh">
-                        <td>{{ index + 1 }}</td>
-                        <td v-if="!hideIdCard">{{ student.idCard }}</td>
-                        <td>{{ student.ksh }}</td>
-                        <td>{{ student.seatNo }}</td>
-                        <td>{{ student.name }}</td>
-                        <td class="signature-cell"></td>
-                    </tr>
-                    </tbody>
-                </table>
-
-                <hr class="no-print-element">
-                <div class="print-page-break" v-if="index < arrangedRooms.length - 1"></div>
+                            </td>
+                            <td v-for="n in (5 - row.length)" :key="`empty-${n}`" class="student-cell"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </section>
             </div>
+
+            <template v-else>
+                <div v-for="(room, index) in arrangedRooms" :key="index">
+                    <div class="middle hdd-header">
+                        <h4 class="middle exam-title" style="text-align: center">{{examName}}</h4>
+                        <h5 class="hdd-header-line1">
+                            <span class="hdd-left">{{ room.schoolName }}</span>
+                            <span class="hdd-center">{{ room.typeId }} {{ room.typeName}} {{ room.name }}</span>
+                            <span class="hdd-right">考场号：{{ room.roomName}}({{ room.students.length }}人)</span>
+                        </h5>
+                        <h5 class="hdd-header-line2">
+                            <span class="hdd-left">考试时间：{{ room.time }}</span>
+                            <span class="hdd-right">监考教师：____________________</span>
+                        </h5>
+                    </div>
+                    <table class="checklist-table">
+                        <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th v-if="!hideIdCard">身份证号</th>
+                            <th>准考证号</th>
+                            <th>座位号</th>
+                            <th>姓名</th>
+                            <th>考生签名</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="(student, index) in room.students" :key="student.ksh">
+                            <td>{{ index + 1 }}</td>
+                            <td v-if="!hideIdCard">{{ student.idCard }}</td>
+                            <td>{{ student.ksh }}</td>
+                            <td>{{ student.seatNo }}</td>
+                            <td>{{ student.name }}</td>
+                            <td class="signature-cell"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <hr class="no-print-element">
+                    <div class="print-page-break" v-if="index < arrangedRooms.length - 1"></div>
+                </div>
+            </template>
         </div>
 
         <div v-if="tab === '准考证'">

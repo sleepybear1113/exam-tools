@@ -35,13 +35,10 @@
 
 }
 
-/**
-A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
- */
+/* A4 公共容器；具体页面的内边距由各打印视图设置。 */
 .a4-paper {
     width: 210mm;
     min-height: 297mm;
-    /*padding: 25mm 10mm 15mm 10mm;*/
     margin: auto;
 }
 
@@ -132,6 +129,98 @@ A4纸打印，页边距设置为：上2.5cm，下1.5cm，左1.0cm，右1.0cm
 .hdd-right {
     flex: 1;
     text-align: right;
+}
+
+/* 带照片核对单的每个数据页对应一张 A4，预览与打印使用相同尺寸。 */
+.photo-checklist-page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 5mm 10mm;
+    box-sizing: border-box;
+    background: white;
+}
+
+.photo-checklist-page + .photo-checklist-page {
+    break-before: page;
+    page-break-before: always;
+}
+
+.photo-checklist-page .exam-title {
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 0 0 4px;
+}
+
+.photo-checklist-page .hdd-header-line1,
+.photo-checklist-page .hdd-header-line2 {
+    font-size: 14px;
+    line-height: 1.25;
+    margin: 0 0 4px;
+}
+
+.hdd-page-number {
+    display: inline-block;
+    margin-left: 6px;
+    white-space: nowrap;
+}
+
+.photo-checklist-page .hdd-table {
+    margin: 2mm auto 0;
+}
+
+.photo-checklist-page .student-info {
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.photo-checklist-page .photo-container {
+    /* 原高 105px，缩小 5%；宽度与图片等比例显示方式不变。 */
+    height: 99.75px;
+    margin-bottom: 2px;
+}
+
+.photo-checklist-page .four-line-info .photo-container {
+    /* 隐藏身份证号后剩 4 行信息，照片宽高在当前尺寸上放大 5%。 */
+    width: 84px;
+    height: 104.7375px;
+}
+
+.photo-checklist-page .info-text p {
+    line-height: 12px;
+}
+
+.photo-checklist-page .info-text p:first-child {
+    font-size: 10px;
+}
+
+@media screen {
+    .photo-checklist-page {
+        box-shadow: 0 0 0 1px #ddd;
+        margin-bottom: 16px;
+    }
+}
+
+@media print {
+    #exam-rooms-arrange:has(> .photo-checklist-print) {
+        padding: 0 !important;
+    }
+
+    .main.photo-checklist-print {
+        min-height: 0;
+    }
+
+    .photo-checklist-page {
+        min-height: 0;
+        margin: 0;
+    }
+
+    .photo-checklist-page .hdd-header,
+    .photo-checklist-page .room-row,
+    .photo-checklist-page .student-info {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
 }
 
 /* 无照片核对单：带表头，一个考生一行 */
