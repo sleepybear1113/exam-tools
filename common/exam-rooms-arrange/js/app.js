@@ -776,18 +776,19 @@ let vm = createApp({
             if (!sameStudentGroupList.value || sameStudentGroupList.value.length === 0) {
                 return [];
             }
+            const toSortString = value => value == null ? '' : String(value);
             return [...sameStudentGroupList.value].sort((a, b) => {
                 // 首要排序
                 let result = 0;
                 if (admissionTicketSortKey.value) {
-                    const aVal = a[admissionTicketSortKey.value] || '';
-                    const bVal = b[admissionTicketSortKey.value] || '';
+                    const aVal = toSortString(a[admissionTicketSortKey.value]);
+                    const bVal = toSortString(b[admissionTicketSortKey.value]);
                     result = aVal.localeCompare(bVal, 'zh-CN');
                 }
                 // 次要排序
                 if (result === 0 && admissionTicketSecondarySortKey.value) {
-                    const aVal = a[admissionTicketSecondarySortKey.value] || '';
-                    const bVal = b[admissionTicketSecondarySortKey.value] || '';
+                    const aVal = toSortString(a[admissionTicketSecondarySortKey.value]);
+                    const bVal = toSortString(b[admissionTicketSecondarySortKey.value]);
                     result = aVal.localeCompare(bVal, 'zh-CN');
                 }
                 return result;
