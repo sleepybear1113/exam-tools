@@ -13,6 +13,7 @@
         warnTbody: document.querySelector('#warnTable tbody'),
         warnCount: document.getElementById('warningCount'),
         loading: document.getElementById('loadingOverlay'),
+        guideImage: document.getElementById('guideImageContainer'),
     };
 
     let records = []; // 原始解析后记录（每页一条）
@@ -463,6 +464,7 @@
             renderStats(stats);
             renderWarnings(warnings);
             setControlsEnabled(true, warnings.length > 0);
+            if (els.guideImage) els.guideImage.classList.add('d-none');
         } finally {
             hideLoading();
         }
@@ -616,6 +618,7 @@
             els.stats.innerHTML = '';
             renderWarnings([]);
             setControlsEnabled(false);
+            if (els.guideImage) els.guideImage.classList.remove('d-none');
         });
         els.btnExportAll.addEventListener('click', exportAllExcel);
         if (els.btnExportStats) els.btnExportStats.addEventListener('click', exportStatsExcel);

@@ -11,6 +11,10 @@
     <div class="container py-4">
         <h1 class="h4 mb-3">高考报名数据校验-考生报名表PDF</h1>
 
+        <div class="alert alert-info" role="alert">
+            本工具可以用来校验考生报名表中的部分基础数据是否有冲突、缺失，并可以将异常情况进行导出。涉及学生个人信息方面，则仍需要人工进行审查。
+        </div>
+
         <div class="row g-3 align-items-end">
             <div class="col-auto">
                 <button class="btn btn-secondary" id="btnClear" disabled>清空</button>
@@ -25,7 +29,12 @@
             </div>
         </div>
 
-        <div class="row mt-3 g-3">
+        <div class="mt-3" id="guideImageContainer">
+            <div class="text-muted mb-2">考生报名表下载位置如图</div>
+            <img src="./考生报名表打印.jpg" alt="考生报名表下载位置示意图" class="img-fluid border rounded" style="max-width: 640px;">
+        </div>
+
+        <div class="row mt-3 g-3" id="resultContainer">
             <div class="col-12 col-lg-5">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
