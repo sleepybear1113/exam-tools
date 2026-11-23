@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高考、1月学选考及单独考试报名数据统计</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div id="app" class="app" v-cloak>
+
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="header-text">
+                <h1>高考、1 月学选考及单独考试报名数据统计</h1>
+                <p>Excel 文件只在当前浏览器内解析，不上传任何服务器；以身份证号码为唯一主键，完成审核过滤、去重、缴费交叉比对与分组统计。</p>
+            </div>
+            <a class="back-link" href="../../index.html">← 返回工具合集</a>
+        </div>
+    </header>
+
+    <main class="app-main">
+
+        <!-- 1. 文件上传 -->
+        <section class="panel">
+            <div class="panel-head">
+                <h2>① 上传 Excel 文件</h2>
+                <p>文件必须拖入对应区域，不同类型不可混用。每个区域可单独替换或移除文件。</p>
+            </div>
+
+            <div class="upload-grid">
+                <article
+                        v-for="card in uploadCards"
+                        :key="card.kind"
+                        class="upload-card"
+                        :class="{
+                            'is-dragging': dragState[card.kind],
+                            'is-ready': files[card.kind].status === 'ready',
+                            'is-error': files[card.kind].status === 'error'
+                        }"
+                        @dragover.prevent="onDragOver(card.kind, $event)"
+                        @dragenter.prevent="onDragEnter(card.kind, $event)"
+                        @dragleave.prevent="onDragLeave(card.kind, $event)"
+                        @drop.prevent="onDrop(card.kind, $event)">
+
+                    <div class="upload-card-head">
+                        <h3>{{ card.title }}</h3>
+                        <span class="ext-badge">{{ card.extLabel }}</span>
+                    </div>
+                    <p class="upload-hint">{{ card.hint }}</p>
+
+                    <div class="dropzone" @click="pickFile(card.kind)">
+                        <template v-if="files[card.kind].status === 'idle'">
+                            <span class="dz-icon">＋</span>
+                            <span class="dz-main">将文件拖动到此区域</span>
+                            <span class="dz-sub">或点击本区域选择文件</span>
+                        </template>
+                        <template v-else-if="files[card.kind].status === 'reading'">
+                            <span class="dz-spinner"></span>
+                            <span class="dz-main">正在读取并识别表头…</span>
+                        </template>
+                        <template v-else-if="files[card.kind].status === 'error'">
+                            <span class="dz-icon dz-icon-error">!</span>
+                            <span class="dz-main error-text">读取失败</span>
+                            <span class="dz-sub">{{ files[card.kind].errorMessage }}</span>
+                        </template>
+                        <template v-else>
+                            <span class="dz-icon dz-icon-ok">✓</span>
+                            <span class="dz-main">{{ files[card.kind].fileName }}</span>
+                            <span class="dz-sub">点击可重新选择文件（会替换当前文件，不做合并）</span>
+                        </template>
+                    </div>
+
+                    <input
+                            type="file"
+                            class="hidden-input"
+                            :accept="card.accept"
+                            :ref="'input-' + card.kind"
+                            @change="onFileChange(card.kind, $event)">
+
+                    <div class="upload-actions">
+                        <button type="button" class="btn btn-ghost" @click="pickFile(card.kind)">选择文件</button>
+                        <button
+                                type="button"
+                                class="btn btn-ghost btn-danger"
+                                :disabled="files[card.kind].status === 'idle'"
+                                @click="removeFile(card.kind)">移除文件</button>
+                    </div>
+
+                    <div class="sheet-picker" v-if="files[card.kind].candidates.length > 1">
+                        <label>检测到多个可用工作表，请选择：</label>
+                        <select :value="files[card.kind].sheetName" @change="onSheetChange(card.kind, $event)">
+                            <option v-for="candidate in files[card.kind].candidates" :key="candidate.sheetName" :value="candidate.sheetName">
+                                {{ candidate.label }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <dl class="file-summary" v-if="files[card.kind].status === 'ready'">
+                        <div v-for="item in summaryItems(card.kind)" :key="item.label">
+                            <dt>{{ item.label }}</dt>
+                            <dd>{{ item.value }}</dd>
+                        </div>
+                    </dl>
+                </article>
+            </div>
+        </section>
+
+        <!-- 2. 映射配置 -->
+        <section class="panel">
+            <div class="panel-head">
+                <h2>② 报名点及县区映射</h2>
+                <p>映射表仅保存在本机浏览器（localStorage），不包含任何考生信息，也不会上传。未配置的代码仍保留在统计结果中，名称显示“未配置名称”。</p>
+            </div>
+
+            <div class="mapping-grid">
+                <details class="mapping-panel" :open="mappingOpen.bmd">
+                    <summary>
+                        <span>报名点映射（报名点代码 → 报名点名称）</span>
+                        <span class="summary-count">{{ bmdRows.length }} 条</span>
+                    </summary>
+                    <div class="mapping-body">
+                        <table class="mapping-table" v-if="bmdRows.length">
+                            <thead>
+                            <tr>
+                                <th>代码</th>
+                                <th>名称</th>
+                                <th class="col-action"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="(row, index) in bmdRows" :key="'bmd-' + index">
+                                <td>
+                                    <input type="text" v-model="row.code" placeholder="例如 80101"
+                                           :class="{'input-invalid': isDupCode('bmd', row.code)}">
+                                </td>
+                                <td>
+                                    <input type="text" v-model="row.name" placeholder="报名点名称">
+                                </td>
+                                <td class="col-action">
+                                    <button type="button" class="btn-icon" @click="removeMappingRow('bmd', index)">删除</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <p class="empty-hint" v-else>暂无报名点映射，点击“新增一行”或使用下方批量导入。</p>
+
+                        <div class="mapping-actions">
+                            <button type="button" class="btn btn-ghost" @click="addMappingRow('bmd')">新增一行</button>
+                        </div>
+
+                        <div class="batch-box">
+                            <label>批量导入（每行“代码 + 名称”，支持 Tab / 逗号分隔，或粘贴 JSON）</label>
+                            <textarea v-model="batchInput.bmd" rows="3" placeholder="80101&#9;嘉兴一中&#10;80102&#9;秀州中学"></textarea>
+                            <button type="button" class="btn btn-ghost" @click="importBatch('bmd')">解析导入</button>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="mapping-panel" :open="mappingOpen.county">
+                    <summary>
+                        <span>县区映射（县区代码 → 县区名称）</span>
+                        <span class="summary-count">{{ countyRows.length }} 条</span>
+                    </summary>
+                    <div class="mapping-body">
+                        <p class="mapping-tip">县区代码取自报名点代码第 2–3 位（例如 80101 → 01）。</p>
+                        <table class="mapping-table" v-if="countyRows.length">
+                            <thead>
+                            <tr>
+                                <th>代码</th>
+                                <th>名称</th>
+                                <th class="col-action"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="(row, index) in countyRows" :key="'county-' + index">
+                                <td>
+                                    <input type="text" v-model="row.code" placeholder="例如 01"
+                                           :class="{'input-invalid': isDupCode('county', row.code)}">
+                                </td>
+                                <td>
+                                    <input type="text" v-model="row.name" placeholder="县区名称">
+                                </td>
+                                <td class="col-action">
+                                    <button type="button" class="btn-icon" @click="removeMappingRow('county', index)">删除</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <p class="empty-hint" v-else>暂无县区映射，点击“新增一行”或使用下方批量导入。</p>
+
+                        <div class="mapping-actions">
+                            <button type="button" class="btn btn-ghost" @click="addMappingRow('county')">新增一行</button>
+                        </div>
+
+                        <div class="batch-box">
+                            <label>批量导入（每行“代码 + 名称”，支持 Tab / 逗号分隔，或粘贴 JSON）</label>
+                            <textarea v-model="batchInput.county" rows="3" placeholder="01&#9;南湖区&#10;02&#9;秀洲区"></textarea>
+                            <button type="button" class="btn btn-ghost" @click="importBatch('county')">解析导入</button>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- 3. 统计类型 -->
+        <section class="panel">
+            <div class="panel-head">
+                <h2>③ 选择统计类型</h2>
+                <p>可同时勾选多种类型。上传对应文件后该类型才可勾选，统计口径固定，不提供可配置的命中值。</p>
+            </div>
+
+            <div class="type-grid">
+                <div
+                        v-for="type in statTypes"
+                        :key="type.key"
+                        class="type-card"
+                        :class="{'is-disabled': !isTypeAvailable(type.key), 'is-checked': selection[type.key]}">
+                    <label class="type-select">
+                        <input type="checkbox" v-model="selection[type.key]" :disabled="!isTypeAvailable(type.key)">
+                        <span class="type-body">
+                            <span class="type-title">{{ type.title }}</span>
+                            <span class="type-desc">{{ type.desc }}</span>
+                            <span class="type-state" :class="isTypeAvailable(type.key) ? 'state-ok' : 'state-wait'">
+                                {{ isTypeAvailable(type.key) ? '所需文件已就绪' : '请先上传' + type.requireText }}
+                            </span>
+                        </span>
+                    </label>
+
+                    <label
+                            class="type-option"
+                            :class="{'is-disabled': !isTypeAvailable(type.key)}"
+                            title="勾选后，合计值为 0 的统计列不显示（代码、名称列始终保留）；只影响表格显示，不改变统计结果">
+                        <input type="checkbox" v-model="hideZeroColumns[type.key]" :disabled="!isTypeAvailable(type.key)">
+                        隐藏合计为 0 的列
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 操作 -->
+        <section class="panel panel-actions">
+            <button type="button" class="btn btn-primary" :disabled="!canGenerate || busy" @click="generate">
+                {{ busy ? '正在统计…' : '生成统计' }}
+            </button>
+            <button type="button" class="btn btn-ghost" :disabled="!results.length" @click="clearResults">清空统计结果</button>
+            <button type="button" class="btn btn-ghost btn-danger" @click="resetAll">重置全部</button>
+            <span class="status-line">{{ statusText }}</span>
+        </section>
+
+        <!-- 5. 校验与异常 -->
+        <section class="panel">
+            <div class="panel-head">
+                <h2>④ 数据校验及异常提示</h2>
+                <p>身份证号码已脱敏展示。警告项不影响统计生成，但请人工核查源数据。</p>
+            </div>
+
+            <div v-if="!hasAnyDiagnostics && !distributions.length" class="empty-hint">
+                暂无异常提示。上传文件后此处会显示表头、数据质量问题与取值分布。
+            </div>
+
+            <div class="diag-block" v-if="errorDiagnostics.length">
+                <h3 class="diag-title diag-title-error">错误（{{ errorDiagnostics.length }} 类）</h3>
+                <ul class="diag-list">
+                    <li v-for="item in errorDiagnostics" :key="item.code" class="diag-item diag-error">
+                        <div class="diag-line">
+                            <span class="diag-badge">错误</span>
+                            <span class="diag-text">{{ item.title }}</span>
+                            <span class="diag-count">{{ item.count }}</span>
+                        </div>
+                        <ul class="diag-samples" v-if="item.samples.length">
+                            <li v-for="(sample, index) in item.samples" :key="index">{{ sample }}</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="diag-block" v-if="warningDiagnostics.length">
+                <h3 class="diag-title diag-title-warning">警告（{{ warningDiagnostics.length }} 类）</h3>
+                <ul class="diag-list">
+                    <li v-for="item in warningDiagnostics" :key="item.code" class="diag-item diag-warning">
+                        <div class="diag-line">
+                            <span class="diag-badge">警告</span>
+                            <span class="diag-text">{{ item.title }}</span>
+                            <span class="diag-count">{{ item.count }}</span>
+                        </div>
+                        <details class="diag-samples-box" v-if="item.samples.length">
+                            <summary>查看样例（{{ item.samples.length }}）</summary>
+                            <ul class="diag-samples">
+                                <li v-for="(sample, index) in item.samples" :key="index">{{ sample }}</li>
+                            </ul>
+                        </details>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="dist-block" v-if="distributions.length">
+                <h3 class="diag-title">取值分布（供人工核查）</h3>
+                <div class="dist-grid">
+                    <div class="dist-card" v-for="(dist, index) in distributions" :key="index">
+                        <h4>{{ dist.group }} · {{ dist.title }}</h4>
+                        <ul>
+                            <li v-for="(item, itemIndex) in dist.items" :key="itemIndex">
+                                <span>{{ item.label }}</span>
+                                <strong>{{ item.count }}</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. 统计结果 -->
+        <section class="panel" v-if="results.length">
+            <div class="panel-head">
+                <h2>⑤ 统计结果</h2>
+                <p>共 {{ results.length }} 张表，统计时间：{{ generatedAt }}</p>
+            </div>
+
+            <div class="stale-banner" v-if="stale">
+                文件或映射已变更，当前结果可能已过期，请重新点击“生成统计”。
+            </div>
+
+            <article class="result-card" v-for="table in results" :key="table.key">
+                <div class="result-head">
+                    <h3>{{ table.title }}</h3>
+                    <div class="result-head-actions">
+                        <span
+                                class="result-hidden"
+                                v-if="table.hiddenColumns && table.hiddenColumns.length"
+                                :title="'已隐藏：' + table.hiddenColumns.join('、')">
+                            已隐藏 {{ table.hiddenColumns.length }} 个 0 值列
+                        </span>
+                        <span class="result-count">数据行 {{ table.rows.length }}</span>
+                        <button
+                                type="button"
+                                class="btn btn-copy"
+                                :disabled="!table.rows.length"
+                                title="复制为 Tab 分隔文本（含表头与合计行），可直接粘贴到 Excel"
+                                @click="copyTable(table)">复制表格</button>
+                    </div>
+                </div>
+
+                <dl class="result-meta">
+                    <div><dt>数据来源</dt><dd>{{ table.source }}</dd></div>
+                    <div><dt>统计时间</dt><dd>{{ table.generatedAt }}</dd></div>
+                    <div><dt>审核过滤口径</dt><dd>{{ table.auditRule }}</dd></div>
+                    <div><dt>缴费过滤口径</dt><dd>{{ table.paymentRule }}</dd></div>
+                </dl>
+
+                <div class="result-notes" v-if="table.notes.length">
+                    <p v-for="(note, index) in table.notes" :key="index" :class="'note-' + note.level">{{ note.text }}</p>
+                </div>
+
+                <div class="table-scroll" v-if="table.rows.length">
+                    <table class="result-table">
+                        <thead>
+                        <tr>
+                            <th v-for="column in table.columns"
+                                :key="column.key"
+                                :class="[column.type === 'number' ? 'col-number' : 'col-text', {'col-unavailable': column.available === false}]"
+                                :title="column.available === false ? '源文件缺少对应字段，无法统计' : ''">
+                                {{ column.label }}
+                                <span v-if="column.available === false" class="unavailable-mark">缺失</span>
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="(row, rowIndex) in table.rows" :key="rowIndex">
+                            <td v-for="column in table.columns"
+                                :key="column.key"
+                                :class="[column.type === 'number' ? 'col-number' : 'col-text', {'col-unavailable': column.available === false}]">
+                                {{ formatCell(row, column) }}
+                            </td>
+                        </tr>
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td v-for="column in table.columns"
+                                :key="column.key"
+                                :class="[column.type === 'number' ? 'col-number' : 'col-text', {'col-unavailable': column.available === false}]">
+                                {{ formatCell(table.totalRow, column) }}
+                            </td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <p class="empty-hint" v-else>没有符合条件的统计数据，未生成全零统计表。请检查审核状态、身份证与报名点字段。</p>
+            </article>
+        </section>
+
+        <footer class="app-footer">
+            © 2026 考试考务工具合集 · 数据仅在本地内存中处理
+        </footer>
+    </main>
+
+    <div class="toast" v-if="toast" :class="'toast-' + toast.type" role="status">{{ toast.message }}</div>
+</div>
+
+<script src="../../lib/vue/3.5.20/vue.global.prod.js"></script>
+<script src="../../lib/sheetjs/0.20.3/xlsx.full.min.js"></script>
+<script src="./js/excel-reader.js"></script>
+<script src="./js/data-normalizer.js"></script>
+<script src="./js/statistics-gaokao.js"></script>
+<script src="./js/statistics-payment.js"></script>
+<script src="./js/statistics-january.js"></script>
+<script src="./js/statistics-dandu.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>
