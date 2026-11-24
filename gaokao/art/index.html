@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美术统考 · 承诺签名表与手机收缴登记表</title>
+    <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+<div id="app" v-cloak>
+
+    <header class="app-header no-print">
+        <div class="header-inner">
+            <div class="header-text">
+                <h1>美术与设计类统考 · 考务材料生成</h1>
+                <p>
+                    导入「美术报名库」生成考生诚信考试承诺签名表（一场一页、A4 打印）；
+                    再导入「高考报名库」，按 美术库 <code>KSH</code> ↔ 高考库 <code>BMXH_</code> 匹配班级与报名点，
+                    按报名点生成手机收缴登记表 Excel。所有数据仅在当前浏览器内存中处理，不上传任何服务器。
+                </p>
+            </div>
+            <a class="back-link" href="../../index.html">← 返回工具合集</a>
+        </div>
+    </header>
+
+    <main class="app-main no-print">
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2>① 导入报名数据</h2>
+                <p>
+                    把文件拖到对应卡片，或拖到页面任意位置自动识别。
+                    美术库必需：ZKZH（准考证号）、XM（姓名）、KC（考场号）；高考库必需：BMXH_（报名序号）、BJ_（班级）、BMD_（报名点）。
+                </p>
+            </div>
+
+            <div class="upload-grid">
+                <article class="upload-card" :class="artUploadClass"
+                         @click="pickFile('art')"
+                         @dragover.stop.prevent="onCardDragOver('art')"
+                         @dragleave.stop="onCardDragLeave('art')"
+                         @drop.stop.prevent="onCardDrop('art', $event)">
+                    <div class="upload-card-head">
+                        <h3>美术报名库</h3>
+                        <span class="ext-badge">.xlsx / .xls</span>
+                    </div>
+
+                    <div class="dropzone">
+                        <template v-if="fileState === 'idle'">
+                            <span class="dz-icon">⇩</span>
+                            <span class="dz-main">把「美术报名库」Excel 拖到这里</span>
+                            <span class="dz-sub">或点击本区域选择文件</span>
+                        </template>
+                        <template v-else-if="fileState === 'reading'">
+                            <span class="dz-spinner"></span>
+                            <span class="dz-main">正在解析文件…</span>
+                        </template>
+                        <template v-else-if="fileState === 'ready'">
+                            <span class="dz-icon dz-ok">✓</span>
+                            <span class="dz-main">{{ fileName }}</span>
+                            <span class="dz-sub">已读取 {{ records.length }} 名考生 · 点击可更换文件</span>
+                        </template>
+                        <template v-else>
+                            <span class="dz-icon dz-bad">!</span>
+                            <span class="dz-main">{{ fileName || '文件无法识别' }}</span>
+                            <span class="dz-sub dz-error">{{ errorMsg }}</span>
+                        </template>
+                    </div>
+                </article>
+
+                <article class="upload-card" :class="gkUploadClass"
+                         @click="pickFile('gk')"
+                         @dragover.stop.prevent="onCardDragOver('gk')"
+                         @dragleave.stop="onCardDragLeave('gk')"
+                         @drop.stop.prevent="onCardDrop('gk', $event)">
+                    <div class="upload-card-head">
+                        <h3>高考报名库</h3>
+                        <span class="ext-badge">.xlsx / .xls</span>
+                    </div>
+
+                    <div class="dropzone">
+                        <template v-if="gkState === 'idle'">
+                            <span class="dz-icon">⇩</span>
+                            <span class="dz-main">把「高考报名库」Excel 拖到这里</span>
+                            <span class="dz-sub">用于匹配班级与报名点</span>
+                        </template>
+                        <template v-else-if="gkState === 'reading'">
+                            <span class="dz-spinner"></span>
+                            <span class="dz-main">正在解析文件…</span>
+                        </template>
+                        <template v-else-if="gkState === 'ready'">
+                            <span class="dz-icon dz-ok">✓</span>
+                            <span class="dz-main">{{ gkFileName }}</span>
+                            <span class="dz-sub">已读取 {{ gkRecords.length }} 条报名记录 · 点击可更换文件</span>
+                        </template>
+                        <template v-else>
+                            <span class="dz-icon dz-bad">!</span>
+                            <span class="dz-main">{{ gkFileName || '文件无法识别' }}</span>
+                            <span class="dz-sub dz-error">{{ gkErrorMsg }}</span>
+                        </template>
+                    </div>
+                </article>
+            </div>
+
+            <input ref="artPicker" class="hidden-input" type="file" accept=".xlsx,.xls" @change="onPickFile('art', $event)">
+            <input ref="gkPicker" class="hidden-input" type="file" accept=".xlsx,.xls" @change="onPickFile('gk', $event)">
+
+            <p class="tip">
+                报名点名称取自「高考及学选考报名数据统计工具」保存在本机的报名点映射（只含代码与名称，不含考生信息）。
+                当前已读取 <strong>{{ bmdMapCount }}</strong> 条映射，<button class="link-btn" type="button" @click="refreshBmdMap">重新读取</button>
+            </p>
+        </section>
+
+        <section class="panel empty-panel" v-if="!hasAny">
+            <h2>暂无数据</h2>
+            <p>导入「美术报名库」后可生成承诺签名表；再导入「高考报名库」可生成手机收缴登记表。</p>
+        </section>
+
+        <!-- 功能选择 -->
+        <section class="panel" v-if="hasAny && view === 'overview'">
+            <div class="panel-head">
+                <h2>② 选择要生成的材料</h2>
+                <p>两个功能互不影响，点击卡片进入对应模块，页面只展示当前模块的内容。</p>
+            </div>
+
+            <div class="entry-grid">
+                <article class="entry-card" :class="{'is-disabled': !records.length}">
+                    <span class="entry-icon">🖨️</span>
+                    <h3>考生诚信考试承诺签名表</h3>
+                    <p class="entry-desc">按考场分页，一场一页（每页不超过 30 人），A4 纵向打印。</p>
+                    <p class="entry-meta" v-if="records.length">
+                        {{ stats.total }} 名考生 · {{ stats.rooms }} 个考场 · {{ stats.pages }} 页
+                    </p>
+                    <p class="entry-meta is-muted" v-else>需要先导入美术报名库</p>
+                    <button class="btn btn-primary" type="button" :disabled="!records.length" @click="openView('pledge')">
+                        生成与打印
+                    </button>
+                </article>
+
+                <article class="entry-card" :class="{'is-disabled': !(records.length && gkRecords.length)}">
+                    <span class="entry-icon">📱</span>
+                    <h3>手机收缴登记表</h3>
+                    <p class="entry-desc">按报名点生成 Excel，内含 熟悉试场 / 素描 / 速写 / 色彩 四个工作表。</p>
+                    <p class="entry-meta" v-if="records.length && gkRecords.length">
+                        {{ phoneGroups.length }} 个报名点 · 已匹配 {{ phoneMatched }} 人
+                    </p>
+                    <p class="entry-meta is-muted" v-else-if="!records.length">需要先导入美术报名库</p>
+                    <p class="entry-meta is-muted" v-else>需要先导入高考报名库</p>
+                    <button class="btn btn-primary" type="button"
+                            :disabled="!(records.length && gkRecords.length)"
+                            @click="openView('phone')">
+                        生成与导出
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <!-- 承诺签名表 -->
+        <section class="panel" v-if="view === 'pledge'">
+            <div class="view-head">
+                <button class="btn btn-small" type="button" @click="openView('overview')">← 返回</button>
+                <h2>考生诚信考试承诺签名表</h2>
+                <span class="view-meta">{{ stats.total }} 人 · {{ stats.rooms }} 个考场 · {{ stats.pages }} 页</span>
+            </div>
+
+            <div class="title-form">
+                <label class="field">
+                    <span class="field-label">标题前缀（年份 {{ examYear }} 自动生成）</span>
+                    <input class="field-input" type="text" v-model="titlePrefix" placeholder="如：嘉兴市">
+                </label>
+                <div class="title-preview">
+                    <span class="field-label">打印效果（以考场 001 为例）</span>
+                    <p class="title-preview-text">{{ baseTitle }}-001</p>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" type="button" @click="doPrint">打印全部（A4 纵向）</button>
+                <button class="btn" type="button" @click="reset">清空全部数据</button>
+            </div>
+
+            <ul class="warn-list" v-if="warnings.length">
+                <li v-for="(item, i) in warnings" :key="i">{{ item }}</li>
+            </ul>
+
+            <p class="tip">
+                每页一个考场，考场号显示在标题末尾。打印时把「纸张」设为 A4、「缩放」100%、关闭「页眉页脚」即可；
+                下方为打印预览，打印只会输出预览内容。
+            </p>
+        </section>
+
+        <!-- 手机收缴登记表 -->
+        <section class="panel" v-if="view === 'phone'">
+            <div class="view-head">
+                <button class="btn btn-small" type="button" @click="openView('overview')">← 返回</button>
+                <h2>手机收缴登记表</h2>
+                <span class="view-meta" v-if="records.length && gkRecords.length">
+                    {{ phoneGroups.length }} 个报名点 · 已匹配 {{ phoneMatched }} 人
+                </span>
+            </div>
+
+            <p class="view-desc">
+                以美术报名库为主表，用 <code>KSH</code> 匹配高考库 <code>BMXH_</code>，按 <code>BMD_</code> 分组，组内按班级、考生号排序；
+                每个报名点生成一个 Excel（命名：前缀-报名点代码-报名点名称），格式与模板列宽保持一致，数据从第 4 行开始填充。
+            </p>
+
+            <p class="need-gk" v-if="!records.length">
+                请先导入「美术报名库」（主表），再导入「高考报名库」。
+            </p>
+
+            <p class="need-gk" v-else-if="!gkRecords.length">
+                还没有导入「高考报名库」。导入后即可得到班级与报名点信息并生成登记表。
+            </p>
+
+            <template v-else>
+                <div class="stat-row">
+                    <span class="stat-chip">已匹配 <strong>{{ phoneMatched }}</strong> 人</span>
+                    <span class="stat-chip">报名点 <strong>{{ phoneGroups.length }}</strong> 个</span>
+                    <span class="stat-chip" :class="{'is-warn': phoneUnmatched > 0}">未匹配 <strong>{{ phoneUnmatched }}</strong> 人</span>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-primary" type="button"
+                            :disabled="zipping || !phoneGroups.length"
+                            @click="downloadAllZip">
+                        {{ zipping ? zipProgress : '批量下载 ZIP（按报名点）' }}
+                    </button>
+                </div>
+
+                <ul class="warn-list" v-if="phoneWarnings.length">
+                    <li v-for="(item, i) in phoneWarnings" :key="i">{{ item }}</li>
+                </ul>
+
+                <details class="unmatched-box" v-if="phoneUnmatchedList.length">
+                    <summary>查看未匹配到高考报名库的考生（{{ phoneUnmatchedList.length }} 人）</summary>
+                    <ul>
+                        <li v-for="item in phoneUnmatchedList" :key="item.zkzh">
+                            {{ item.zkzh }} · {{ item.xm }} · 考场 {{ item.kc }}
+                        </li>
+                    </ul>
+                </details>
+
+                <div class="bmd-list">
+                    <article class="bmd-card" v-for="group in phoneGroups" :key="group.code">
+                        <header class="bmd-card-head">
+                            <div class="bmd-title">
+                                <strong>{{ group.name || '未配置名称' }}</strong>
+                                <span class="bmd-code">{{ group.code }}</span>
+                            </div>
+                            <span class="bmd-count">{{ group.rows.length }} 人</span>
+                            <button class="btn btn-small" type="button"
+                                    :disabled="!!downloadingCode"
+                                    @click="downloadGroup(group)">
+                                {{ downloadingCode === group.code ? '生成中…' : '下载 Excel' }}
+                            </button>
+                        </header>
+
+                        <div class="preview-scroll">
+                            <table class="preview-table">
+                                <thead>
+                                <tr>
+                                    <th>序号</th>
+                                    <th>准考证号</th>
+                                    <th>考生号</th>
+                                    <th>姓名</th>
+                                    <th>班级</th>
+                                    <th>收缴情况</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(row, i) in group.rows" :key="row.zkzh">
+                                    <td>{{ i + 1 }}</td>
+                                    <td>{{ row.zkzh }}</td>
+                                    <td>{{ row.ksh }}</td>
+                                    <td>{{ row.xm }}</td>
+                                    <td>{{ row.bj }}</td>
+                                    <td class="cell-empty"></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
+            </template>
+        </section>
+
+    </main>
+
+    <!-- 打印区域：承诺签名表，打印时只输出这个 div 内的内容（仅在承诺书模块显示） -->
+    <div id="print-root" class="print-root" v-if="view === 'pledge'">
+        <div class="page-wrap" v-for="(page, idx) in pages" :key="page.key">
+            <div class="page-label no-print">
+                <span>第 {{ idx + 1 }} / {{ pages.length }} 页</span>
+                <span>
+                    考场 {{ page.kc }} · {{ page.count }} 人
+                    <template v-if="page.parts > 1">（第 {{ page.part }} 段）</template>
+                </span>
+            </div>
+
+            <section class="sheet">
+                <table class="pledge-table">
+                    <colgroup>
+                        <col class="col-seat">
+                        <col class="col-zkzh">
+                        <col class="col-name">
+                        <col class="col-sign">
+                        <col class="col-pledge">
+                    </colgroup>
+                    <thead>
+                    <tr class="title-row">
+                        <th colspan="5">{{ pageTitle(page) }}</th>
+                    </tr>
+                    <tr class="head-row">
+                        <th>座位号</th>
+                        <th>准考证号</th>
+                        <th>姓名</th>
+                        <th>签名</th>
+                        <th>诚信教育内容及诚信考试承诺书</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr class="body-row" v-for="(row, i) in page.rows" :key="i">
+                        <td class="c-seat">{{ row ? row.seat : '' }}</td>
+                        <td class="c-zkzh">{{ row ? row.zkzh : '' }}</td>
+                        <td class="c-name">{{ row ? row.xm : '' }}</td>
+                        <td class="c-sign"></td>
+                        <td class="c-pledge" v-if="i === 0" :rowspan="page.rows.length">
+                            <div class="pledge-text">
+                                <span>{{ pledgeHead }}</span><strong class="pledge-em">{{ pledgeEm }}</strong><span>{{ pledgeTail }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </div>
+
+    <!-- 全页拖拽提示 -->
+    <div class="drop-overlay no-print" v-if="pageDragging">
+        <div class="drop-overlay-box">
+            <span class="dz-icon">⇩</span>
+            <strong>松开鼠标导入</strong>
+            <span>自动识别「美术报名库」或「高考报名库」，数据仅在本地浏览器解析</span>
+        </div>
+    </div>
+
+    <div class="toast no-print" :class="'is-' + toastType" v-if="toastText">{{ toastText }}</div>
+
+</div>
+
+<script src="../../lib/vue/3.5.20/vue.global.prod.js"></script>
+<script src="../../lib/sheetjs/0.20.3/xlsx.full.min.js"></script>
+<script src="../../lib/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="../../lib/jszip/3.10.1/jszip.min.js"></script>
+<script src="./template-20xx.js"></script>
+<script src="./phone-register.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>

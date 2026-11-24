@@ -13,3 +13,4 @@
 
 # 敏感样本数据，不提交版本库
 /gaokao/data-statistics/sample/
+/gaokao/art/sample/
