@@ -1,0 +1,616 @@
+/* ==========================================================================
+   美术与设计类统考 · 考生信息桌贴
+   屏幕预览 + A4 纵向打印（每页一张 A4，页内网格自适应行列数）
+   ========================================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+[v-cloak] {
+    display: none;
+}
+
+body {
+    background: #eef1f7;
+    color: #1f2937;
+    font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.hidden-input {
+    display: none;
+}
+
+/* --------------------------------------------------------------------------
+   顶部标题
+   -------------------------------------------------------------------------- */
+
+.app-header {
+    background: linear-gradient(120deg, #4f46e5 0%, #6366f1 50%, #8b5cf6 100%);
+    color: #fff;
+    padding: 26px 24px;
+}
+
+.header-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.header-text h1 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.header-text p {
+    margin: 0;
+    max-width: 940px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.header-text code {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.18);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12.5px;
+}
+
+.back-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 13px;
+    padding: 8px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+
+.back-link:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+/* --------------------------------------------------------------------------
+   面板
+   -------------------------------------------------------------------------- */
+
+.app-main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 24px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.panel {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+}
+
+.panel-head h2 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.panel-head p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #6b7280;
+}
+
+.panel-head code,
+.tip code {
+    background: #f1f5f9;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+    color: #475569;
+}
+
+.empty-panel h2 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    color: #6b7280;
+}
+
+.empty-panel p {
+    margin: 0;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.tip {
+    margin: 14px 0 0;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #94a3b8;
+}
+
+/* --------------------------------------------------------------------------
+   上传卡片
+   -------------------------------------------------------------------------- */
+
+.upload-card {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.upload-card:hover {
+    border-color: #a5b4fc;
+}
+
+.upload-card.is-dragging {
+    border-color: #6366f1;
+    border-style: solid;
+    background: #eef2ff;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16);
+}
+
+.upload-card.is-ready {
+    border-style: solid;
+    border-color: #34d399;
+    background: #f0fdf4;
+}
+
+.upload-card.is-error {
+    border-style: solid;
+    border-color: #f87171;
+    background: #fef2f2;
+}
+
+.upload-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.upload-card-head h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.ext-badge {
+    font-size: 11px;
+    color: #64748b;
+    background: #e2e8f0;
+    border-radius: 999px;
+    padding: 3px 10px;
+    white-space: nowrap;
+}
+
+.dropzone {
+    margin-top: 12px;
+    min-height: 140px;
+    padding: 18px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    text-align: center;
+}
+
+.upload-card:hover .dropzone {
+    border-color: #c7d2fe;
+}
+
+.dz-icon {
+    font-size: 24px;
+    line-height: 1;
+    color: #6366f1;
+    font-weight: 700;
+}
+
+.dz-icon.dz-ok {
+    color: #10b981;
+}
+
+.dz-icon.dz-bad {
+    color: #ef4444;
+}
+
+.dz-main {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    word-break: break-all;
+}
+
+.dz-sub {
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.6;
+}
+
+.dz-error {
+    color: #dc2626;
+    max-width: 720px;
+}
+
+.dz-spinner {
+    width: 22px;
+    height: 22px;
+    border: 2.5px solid #e0e7ff;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: dz-spin 0.8s linear infinite;
+}
+
+@keyframes dz-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   排列与字号设置
+   -------------------------------------------------------------------------- */
+
+.option-grid {
+    margin-top: 16px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.field-label {
+    font-size: 12.5px;
+    color: #64748b;
+}
+
+.field-input {
+    width: 160px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #1f2937;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16);
+}
+
+.font-preview {
+    flex: 1;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.font-values {
+    margin: 0;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 9px;
+    font-size: 12.5px;
+    color: #475569;
+}
+
+.font-values strong {
+    color: #4338ca;
+    font-size: 15px;
+}
+
+.font-values .is-muted {
+    color: #9ca3af;
+}
+
+.size-hint {
+    margin: 12px 0 0;
+    padding: 10px 14px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 9px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #92400e;
+}
+
+/* --------------------------------------------------------------------------
+   操作按钮 / 提示
+   -------------------------------------------------------------------------- */
+
+.stat-row {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.stat-chip {
+    padding: 6px 14px;
+    background: #eef2ff;
+    border-radius: 999px;
+    font-size: 13px;
+    color: #4338ca;
+}
+
+.stat-chip strong {
+    font-size: 15px;
+}
+
+.actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 10px 22px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #374151;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn:hover {
+    background: #f8fafc;
+    border-color: #9ca3af;
+}
+
+.btn-primary {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    color: #fff;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background: #4338ca;
+    border-color: #4338ca;
+}
+
+.warn-list {
+    margin: 14px 0 0;
+    padding: 12px 16px 12px 34px;
+    list-style: disc;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: #92400e;
+}
+
+/* --------------------------------------------------------------------------
+   预览容器
+   -------------------------------------------------------------------------- */
+
+.print-root {
+    padding: 8px 24px 64px;
+    overflow-x: auto;
+}
+
+.page-wrap {
+    width: 210mm;
+    margin: 0 auto 24px;
+}
+
+.page-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    padding: 0 2px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.sticker-sheet {
+    width: 210mm;
+    height: 297mm;
+    padding: 8mm;
+    background: #fff;
+    box-shadow: 0 6px 24px rgba(15, 23, 42, 0.12);
+    color: #000;
+    display: flex;
+    flex-direction: column;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+/* 行列由内联 CSS 变量控制，单元格为 1fr 等分 */
+.sticker-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--rows, 5), minmax(0, 1fr));
+}
+
+.sticker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gap, 1.2mm);
+    padding: 1.2mm;
+    overflow: hidden;
+    text-align: center;
+    font-family: "Microsoft YaHei", "微软雅黑", "SimHei", "黑体", sans-serif;
+    border-right: 1px dashed #d0d0d0;
+    border-bottom: 1px dashed #d0d0d0;
+}
+
+/* 上下排列：座位号在上，姓名 + 明细在下 */
+.sticker.is-vertical {
+    flex-direction: column;
+}
+
+/* 左右排列：座位号在左，姓名 + 明细在右（格子偏扁宽时自动启用） */
+.sticker.is-horizontal {
+    flex-direction: row;
+    gap: calc(var(--gap, 1.2mm) * 1.8);
+}
+
+.sticker-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--gap, 1.2mm);
+    min-width: 0;
+}
+
+.is-horizontal .sticker-info {
+    align-items: flex-start;
+    text-align: left;
+}
+
+.sticker-seat {
+    flex: 0 0 auto;
+    font-size: var(--seat-size, 53pt);
+    line-height: 1.02;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.sticker-name {
+    font-size: var(--name-size, 22.5pt);
+    line-height: 1.18;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.sticker-gender {
+    margin-left: 0.35em;
+    font-size: 0.78em;
+    font-weight: 500;
+}
+
+.sticker-meta {
+    font-size: var(--meta-size, 13pt);
+    line-height: 1.25;
+    color: #333;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 40px;
+    transform: translateX(-50%);
+    z-index: 1000;
+    max-width: 640px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #fff;
+    background: rgba(17, 24, 39, 0.9);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
+}
+
+/* ==========================================================================
+   打印：只输出 #print-root，每页一张 A4
+   ========================================================================== */
+
+@page {
+    size: A4 portrait;
+    margin: 0;
+}
+
+@media print {
+    body > *:not(#app) {
+        display: none !important;
+    }
+
+    #app > *:not(.print-root) {
+        display: none !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .print-root {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+    }
+
+    .page-wrap {
+        width: auto !important;
+        margin: 0 !important;
+        break-after: page;
+        page-break-after: always;
+    }
+
+    .page-wrap:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+
+    .sticker-sheet {
+        width: 210mm !important;
+        height: 296mm !important;
+        margin: 0 !important;
+        padding: 7mm 8mm !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美术统考 · 考生信息桌贴</title>
+    <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+<div id="app" v-cloak>
+
+    <header class="app-header no-print">
+        <div class="header-inner">
+            <div class="header-text">
+                <h1>美术与设计类专业统考 · 考生信息桌贴</h1>
+                <p>
+                    导入包含 <code>ZWH</code>（座位号）的名单，按考场、座位号生成桌贴，A4 纵向打印后裁切成单张。
+                    每张桌贴展示 座位号、姓名、性别、考场、准考证号、考生号 六项信息。
+                    默认 3 列 × 5 行，可改为 2–3 列、5–15 行；一页张数越少字号越大，
+                    排列也会在「上下」与「左右」之间自动切换，避免格子偏扁宽时文字被压得过小。
+                    所有数据仅在当前浏览器内存中处理，不上传任何服务器。
+                </p>
+            </div>
+            <a class="back-link" href="../index.html">← 返回考务材料</a>
+        </div>
+    </header>
+
+    <main class="app-main no-print">
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2>① 导入名单（需包含 ZWH）</h2>
+                <p>
+                    必需列：<code>ZWH</code>（座位号）、<code>KC</code>（考场号）、<code>XM</code>（姓名）、
+                    <code>ZKZH</code>（准考证号）、<code>KSH</code>（考生号）；
+                    性别由 <code>SFZH</code>（身份证号）第 17 位识别（缺失时退回 <code>XBDM</code>），
+                    可选列：<code>KDMC</code>（考点）。
+                </p>
+            </div>
+
+            <article class="upload-card" :class="uploadClass"
+                     @click="pickFile"
+                     @dragover.stop.prevent="onDragOver"
+                     @dragleave.stop="onDragLeave"
+                     @drop.stop.prevent="onDrop">
+                <div class="upload-card-head">
+                    <h3>美术报名库导出文件</h3>
+                    <span class="ext-badge">.xlsx / .xls</span>
+                </div>
+
+                <div class="dropzone">
+                    <template v-if="fileState === 'idle'">
+                        <span class="dz-icon">⇩</span>
+                        <span class="dz-main">把含 ZWH 的 Excel 拖到这里</span>
+                        <span class="dz-sub">或点击本区域选择文件</span>
+                    </template>
+                    <template v-else-if="fileState === 'reading'">
+                        <span class="dz-spinner"></span>
+                        <span class="dz-main">正在解析文件…</span>
+                    </template>
+                    <template v-else-if="fileState === 'ready'">
+                        <span class="dz-icon dz-ok">✓</span>
+                        <span class="dz-main">{{ fileName }}</span>
+                        <span class="dz-sub">
+                            已读取 {{ records.length }} 名考生 · {{ roomCount }} 个考场 · 点击可更换文件
+                        </span>
+                    </template>
+                    <template v-else>
+                        <span class="dz-icon dz-bad">!</span>
+                        <span class="dz-main">{{ fileName || '文件无法识别' }}</span>
+                        <span class="dz-sub dz-error">{{ errorMsg }}</span>
+                    </template>
+                </div>
+            </article>
+
+            <input ref="picker" class="hidden-input" type="file" accept=".xlsx,.xls" @change="onPick">
+
+            <ul class="warn-list" v-if="warnings.length">
+                <li v-for="(item, i) in warnings" :key="i">{{ item }}</li>
+            </ul>
+        </section>
+
+        <section class="panel" v-if="records.length">
+            <div class="panel-head">
+                <h2>② 排列与字号</h2>
+                <p>
+                    每张桌贴固定展示 座位号、姓名、性别、考场、准考证号、考生号 六项信息，不做取舍。
+                    列数与行数决定每页张数；字号按「单元格高度 × 占比」与「单元格宽度 × 占比」取小值。
+                    排列形式自动切换：格子偏方或偏窄时上下排列，格子偏扁宽时改为左右排列（座位号在左、信息在右），
+                    两种排版分别计算后取字号更合适的一种。
+                </p>
+            </div>
+
+            <div class="option-grid">
+                <label class="field">
+                    <span class="field-label">每页列数</span>
+                    <select class="field-input" v-model.number="cols">
+                        <option v-for="n in colsOptions" :key="n" :value="n">{{ n }} 列</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span class="field-label">每页行数</span>
+                    <select class="field-input" v-model.number="rows">
+                        <option v-for="n in rowsOptions" :key="n" :value="n">{{ n }} 行</option>
+                    </select>
+                </label>
+
+                <div class="font-preview">
+                    <span class="field-label">
+                        每页 {{ layout.perPage }} 张 · 单元格 {{ layout.cellW }} × {{ layout.cellH }} mm
+                    </span>
+                    <p class="font-values">
+                        <span>排列 <strong>{{ layout.mode === 'vertical' ? '上下' : '左右' }}</strong></span>
+                        <span>座位号 <strong>{{ layout.seat }}</strong> pt</span>
+                        <span>姓名 <strong>{{ layout.name }}</strong> pt</span>
+                        <span>明细 <strong>{{ layout.meta }}</strong> pt</span>
+                    </p>
+                </div>
+            </div>
+
+            <p class="size-hint" v-if="sizeHint">{{ sizeHint }}</p>
+
+            <div class="stat-row">
+                <span class="stat-chip">考生 <strong>{{ records.length }}</strong> 人</span>
+                <span class="stat-chip">考场 <strong>{{ roomCount }}</strong> 个</span>
+                <span class="stat-chip">桌贴 <strong>{{ pageCount }}</strong> 页</span>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" type="button" @click="doPrint">打印全部（A4 纵向）</button>
+                <button class="btn" type="button" @click="reset">清空数据</button>
+            </div>
+
+            <p class="tip">
+                打印时把「纸张」设为 A4、「缩放」100%、页边距设为「无」或「默认」并关闭「页眉页脚」；
+                页面上的虚线为裁切参考线，不会影响打印效果。
+            </p>
+        </section>
+
+        <section class="panel empty-panel" v-else>
+            <h2>暂无数据</h2>
+            <p>导入包含 ZWH 的名单后，即可按考场生成桌贴。</p>
+        </section>
+
+    </main>
+
+    <div class="print-root" v-if="pages.length">
+        <div class="page-wrap" v-for="(page, idx) in pages" :key="page.key">
+            <div class="page-label no-print">
+                <span>第 {{ idx + 1 }} / {{ pages.length }} 页</span>
+                <span>
+                    考场 {{ page.kc }} · 本页 {{ page.count }} 张
+                    <template v-if="page.parts > 1">（第 {{ page.part }} / {{ page.parts }} 页）</template>
+                </span>
+            </div>
+
+            <section class="sticker-sheet">
+                <div class="sticker-grid" :style="gridStyle">
+                    <div class="sticker" :class="'is-' + layout.mode" v-for="(row, i) in page.slots" :key="i">
+                        <template v-if="row">
+                            <div class="sticker-seat">{{ row.zwh }}</div>
+                            <div class="sticker-info">
+                                <div class="sticker-name">
+                                    {{ row.xm }}<span class="sticker-gender" v-if="row.gender">{{ row.gender }}</span>
+                                </div>
+                                <div class="sticker-meta">考场 {{ row.kc }}</div>
+                                <div class="sticker-meta">准考证号：{{ row.zkzh }}</div>
+                                <div class="sticker-meta">考生号：{{ row.ksh }}</div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="toast" v-if="toastText">{{ toastText }}</div>
+
+</div>
+
+<script src="../../../lib/vue/3.5.20/vue.global.prod.js"></script>
+<script src="../../../lib/sheetjs/0.20.3/xlsx.full.min.js"></script>
+<script src="./index.js"></script>
+</body>
+</html>
