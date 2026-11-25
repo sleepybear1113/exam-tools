@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学选考试场编排校验</title>
+    <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+<div id="app" v-cloak>
+
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="header-text">
+                <h1>1 月学选考 · 考场编排校验</h1>
+                <p>
+                    上传「1 月学选考报名信息」与「1 月学选考考生考务数据」两个 Excel，按报名序号（<code>BMXH</code>）
+                    匹配考生，逐科目比对考场编排是否一致：报名信息文件的 <code>KD</code> 对应考务数据文件的各科
+                    <code>KD_XX</code>，外语用 <code>WYKD</code> 对应 <code>KD_YY</code>。
+                    比对时忽略开头的 0（如 0012 与 12 视为相同）。文件仅在当前浏览器内解析，不上传任何服务器。
+                </p>
+            </div>
+            <a class="back-link" href="../../index.html">← 返回工具合集</a>
+        </div>
+    </header>
+
+    <main class="app-main">
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2>① 上传两个 Excel</h2>
+                <p>表头不区分大小写。文件 1 需含 BMXH、KD、WYKD 与 KM_* 科目列；文件 2 需含 BMXH 与 KD_* 科目列。</p>
+            </div>
+
+            <div class="upload-grid">
+                <article class="upload-card" :class="cardClass('f1')"
+                         @click="pickFile('f1')"
+                         @dragover.stop.prevent="onDragOver('f1')"
+                         @dragleave.stop="onDragLeave('f1')"
+                         @drop.stop.prevent="onDrop('f1', $event)">
+                    <div class="upload-card-head">
+                        <h3>文件 1：1 月学选考报名信息</h3>
+                        <span class="ext-badge">.xlsx / .xls</span>
+                    </div>
+                    <div class="dropzone">
+                        <template v-if="files.f1.status === 'idle'">
+                            <span class="dz-icon">⇩</span>
+                            <span class="dz-main">把「报名信息」Excel 拖到这里</span>
+                            <span class="dz-sub">或点击本区域选择文件</span>
+                        </template>
+                        <template v-else-if="files.f1.status === 'reading'">
+                            <span class="dz-spinner"></span>
+                            <span class="dz-main">正在解析…</span>
+                        </template>
+                        <template v-else-if="files.f1.status === 'ready'">
+                            <span class="dz-icon dz-ok">✓</span>
+                            <span class="dz-main">{{ files.f1.name }}</span>
+                            <span class="dz-sub">已读取 {{ parsed1 ? parsed1.records.length : 0 }} 条报名记录 · 点击可更换</span>
+                        </template>
+                        <template v-else>
+                            <span class="dz-icon dz-bad">!</span>
+                            <span class="dz-main">{{ files.f1.name || '文件无法识别' }}</span>
+                            <span class="dz-sub dz-error">{{ files.f1.error }}</span>
+                        </template>
+                    </div>
+                </article>
+
+                <article class="upload-card" :class="cardClass('f2')"
+                         @click="pickFile('f2')"
+                         @dragover.stop.prevent="onDragOver('f2')"
+                         @dragleave.stop="onDragLeave('f2')"
+                         @drop.stop.prevent="onDrop('f2', $event)">
+                    <div class="upload-card-head">
+                        <h3>文件 2：1 月学选考考生考务数据</h3>
+                        <span class="ext-badge">.xlsx / .xls</span>
+                    </div>
+                    <div class="dropzone">
+                        <template v-if="files.f2.status === 'idle'">
+                            <span class="dz-icon">⇩</span>
+                            <span class="dz-main">把「考务数据」Excel 拖到这里</span>
+                            <span class="dz-sub">或点击本区域选择文件</span>
+                        </template>
+                        <template v-else-if="files.f2.status === 'reading'">
+                            <span class="dz-spinner"></span>
+                            <span class="dz-main">正在解析…</span>
+                        </template>
+                        <template v-else-if="files.f2.status === 'ready'">
+                            <span class="dz-icon dz-ok">✓</span>
+                            <span class="dz-main">{{ files.f2.name }}</span>
+                            <span class="dz-sub">已读取 {{ parsed2 ? parsed2.records.length : 0 }} 条考务记录 · 点击可更换</span>
+                        </template>
+                        <template v-else>
+                            <span class="dz-icon dz-bad">!</span>
+                            <span class="dz-main">{{ files.f2.name || '文件无法识别' }}</span>
+                            <span class="dz-sub dz-error">{{ files.f2.error }}</span>
+                        </template>
+                    </div>
+                </article>
+            </div>
+
+            <input ref="f1Picker" class="hidden-input" type="file" accept=".xlsx,.xls" @change="onPick('f1', $event)">
+            <input ref="f2Picker" class="hidden-input" type="file" accept=".xlsx,.xls" @change="onPick('f2', $event)">
+
+            <ul class="warn-list" v-if="parseWarnings.length">
+                <li v-for="(item, i) in parseWarnings" :key="i">{{ item }}</li>
+            </ul>
+        </section>
+
+        <section class="panel" v-if="result">
+            <div class="panel-head">
+                <h2>② 比对结果</h2>
+                <p>
+                    表格只列出编排有问题的考生，<strong>完全一致的记录不展示</strong>。
+                    显示「报名信息值 / 考务数据值」表示不一致；「—」表示该科目未报考；
+                    「未匹配」表示考务数据中找不到该报名序号。
+                    外语列比较报名信息文件的 <code>WYKD</code>（外语考点）与考务数据文件的 <code>KD_YY</code>，
+                    且 <code>WYYZ</code>（外语语种）为 0 时视为未选外语，不做校验；
+                    政治列对应考务数据文件的 <code>KD_ZZ</code>。
+                </p>
+            </div>
+
+            <div class="stat-row">
+                <span class="stat-chip">考生 <strong>{{ stats.total }}</strong> 人</span>
+                <span class="stat-chip is-ok">一致 <strong>{{ stats.same }}</strong> 人</span>
+                <span class="stat-chip is-warn">不一致 <strong>{{ stats.diff }}</strong> 人</span>
+                <span class="stat-chip" :class="{'is-warn': stats.missing > 0}">未匹配 <strong>{{ stats.missing }}</strong> 人</span>
+                <span class="stat-chip">不一致科目 <strong>{{ stats.diffCells }}</strong> 项</span>
+            </div>
+
+            <div class="toolbar">
+                <div class="filter-group">
+                    <button type="button" class="filter-btn" :class="{'is-active': filter === 'all'}" @click="filter = 'all'">
+                        全部问题（{{ problemRows.length }}）
+                    </button>
+                    <button type="button" class="filter-btn" :class="{'is-active': filter === 'diff'}" @click="filter = 'diff'">
+                        仅不一致（{{ stats.diff }}）
+                    </button>
+                    <button type="button" class="filter-btn" :class="{'is-active': filter === 'missing'}" @click="filter = 'missing'">
+                        仅未匹配（{{ stats.missing }}）
+                    </button>
+                </div>
+                <input class="field-input" type="text" v-model.trim="keyword"
+                       placeholder="搜索报名序号 / 姓名 / 报名点">
+            </div>
+
+            <ul class="warn-list" v-if="warnings.length">
+                <li v-for="(item, i) in warnings" :key="i">{{ item }}</li>
+            </ul>
+
+            <div class="table-scroll">
+                <table class="check-table">
+                    <thead>
+                    <tr>
+                        <th class="col-bmxh">报名序号</th>
+                        <th class="col-xm">姓名</th>
+                        <th class="col-bmd">报名点</th>
+                        <th v-for="s in subjects" :key="s.key" :title="'报名信息 KD 对比考务数据 ' + columnCode(s)">
+                            {{ s.name }}
+                            <span class="th-code">{{ columnCode(s) }}</span>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="row in filteredRows" :key="row.bmxh" :class="'row-' + row.status">
+                        <td class="cell-code">{{ row.bmxh }}</td>
+                        <td>{{ row.xm }}</td>
+                        <td>{{ row.bmd }}</td>
+                        <td v-for="s in subjects" :key="s.key"
+                            :class="cellClass(row.cells[s.key])"
+                            :title="cellTitle(row.cells[s.key])">
+                            {{ cellDisplay(row.cells[s.key]) }}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="empty-hint" v-if="!filteredRows.length">
+                <template v-if="!problemRows.length">
+                    两个文件的考场编排完全一致（{{ stats.total }} 人），未发现问题。
+                </template>
+                <template v-else>
+                    没有符合筛选条件的记录。
+                </template>
+            </p>
+
+            <details class="detail-box" v-if="onlyIn2.length">
+                <summary>考务数据中有、报名信息中没有的报名序号（{{ onlyIn2.length }} 个）</summary>
+                <ul>
+                    <li v-for="item in onlyIn2" :key="item.bmxh">{{ item.bmxh }} · {{ item.xm }}</li>
+                </ul>
+            </details>
+        </section>
+
+        <section class="panel empty-panel" v-else>
+            <h2>暂无比对结果</h2>
+            <p>请先上传两个 Excel 文件。</p>
+        </section>
+
+    </main>
+
+    <div class="toast" :class="toastClass" v-if="toastText">{{ toastText }}</div>
+
+</div>
+
+<script src="../../lib/vue/3.5.20/vue.global.prod.js"></script>
+<script src="../../lib/sheetjs/0.20.3/xlsx.full.min.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
