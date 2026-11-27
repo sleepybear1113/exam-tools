@@ -76,6 +76,23 @@
                                 @click="switchModule('bundle')">捆扎标签
                         </button>
                     </div>
+                    <div v-if="currentModule === 'bundle'" class="mt-2">
+                        <label class="form-label small">捆扎标签内容：</label>
+                        <div class="btn-group btn-group-sm" role="group" style="width: 100%;">
+                            <button class="btn" :class="bundleMode === 'both' ? 'btn-success' : 'btn-outline-success'"
+                                    @click="bundleMode = 'both'" title="上半页试卷捆，下半页答卷捆">试卷/答卷
+                            </button>
+                            <button class="btn" :class="bundleMode === 'paper' ? 'btn-success' : 'btn-outline-success'"
+                                    @click="bundleMode = 'paper'" title="上下半页都打印试卷捆">仅试卷捆
+                            </button>
+                            <button class="btn" :class="bundleMode === 'answer' ? 'btn-success' : 'btn-outline-success'"
+                                    @click="bundleMode = 'answer'" title="上下半页都打印答卷捆">仅答卷捆
+                            </button>
+                        </div>
+                        <div v-if="bundleIndependentPages.length > 0" class="small text-warning mt-1">
+                            独立捆扎页：第 {{ bundleIndependentPages.join('、') }} 页（合并科目超过 4 个，整页展示，无需上下联裁剪）
+                        </div>
+                    </div>
                 </div>
                 <div v-if="currentModule === 'envelope'" class="mt-2">
                     <label class="form-label small">
@@ -207,92 +224,29 @@
         <!-- 模块三：试卷/答卷捆扎标签 -->
         <div v-if="currentModule === 'bundle' && bundlePages.length > 0" class="print-content">
             <div v-for="(page, pageIdx) in bundlePages" :key="pageIdx">
-                <div v-if="page.paperBundle || page.answerBundle" class="bundle-page" contenteditable="true">
-                    <div class="page-indicator no-print">第{{ pageIdx + 1 }}页/共{{ bundlePages.length }}页</div>
-                    <!-- 上联：试卷捆标签 -->
-                    <div class="bundle-label bundle-label-top">
-                        <div v-if="page.paperBundle" class="bundle-content">
-                            <h2 class="text-center bundle-title">试卷捆 {{ page.paperBundle.venueName ? page.paperBundle.venueName : "" }}</h2>
-                            <div v-for="(subjectData, subIdx) in page.paperBundle.subjects" :key="subIdx"
-                                  class="bundle-subject-group">
-                                <table class="table table-sm table-bordered bundle-table">
-                                    <colgroup>
-                                        <col class="bundle-col-subject">
-                                        <col class="bundle-col-equal">
-                                        <col class="bundle-col-equal">
-                                    </colgroup>
-                                    <tr>
-                                        <td class="bundle-subject-cell" rowspan="2">
-                                            <div class="bundle-subject-name">{{ subjectData.subject }}</div>
-                                        </td>
-                                        <td class="bundle-quantity-cell" rowspan="2">
-                                            <div class="bundle-quantity-value">数量：{{ subjectData.quantity }}</div>
-                                        </td>
-                                        <td><strong>总数量：</strong>{{ subjectData.totalCount }}份</td>
-                                    </tr>
-                                    <tr>
-                                        <td v-if="subjectData.spareVolumeCount" class="cell-light-gray">
-                                            <strong>备用：</strong>{{ subjectData.spareVolumeCount }}份
-                                        </td>
-                                        <td v-else>&nbsp;</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>起止号：</strong>{{ subjectData.fullRange }}</td>
-                                        <td><strong>当前捆：</strong>第{{ subjectData.bundleNo }}捆</td>
-                                        <td><strong>总捆数：</strong>共{{ subjectData.totalBundles }}捆</td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="3" class="bundle-time-cell">
-                                            <strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
+                <div v-if="page.fullPage || page.top || page.bottom" class="bundle-page"
+                     :class="{ 'bundle-page-full': page.fullPage }" contenteditable="true">
+                    <div class="page-indicator no-print">
+                        第{{ pageIdx + 1 }}页/共{{ bundlePages.length }}页<span v-if="page.fullPage">（独立捆扎页，无需上下联裁剪）</span>
                     </div>
-                    <div class="bundle-cut-line" aria-hidden="true"></div>
 
-                    <!-- 下联：答卷捆标签 -->
-                    <div class="bundle-label bundle-label-bottom">
-                        <div v-if="page.answerBundle" class="bundle-content">
-                            <h3 class="text-center bundle-title">答卷捆 {{ page.answerBundle.venueName ? page.answerBundle.venueName : "" }}</h3>
-                            <div v-for="(subjectData, subIdx) in page.answerBundle.subjects" :key="subIdx"
-                                  class="bundle-subject-group">
-                                <table class="table table-sm table-bordered bundle-table">
-                                    <colgroup>
-                                        <col class="bundle-col-subject">
-                                        <col class="bundle-col-equal">
-                                        <col class="bundle-col-equal">
-                                    </colgroup>
-                                    <tr>
-                                        <td class="bundle-subject-cell" rowspan="2">
-                                            <div class="bundle-subject-name">{{ subjectData.subject }}</div>
-                                        </td>
-                                        <td class="bundle-quantity-cell" rowspan="2">
-                                            <div class="bundle-quantity-value">数量：{{ subjectData.quantity }}</div>
-                                        </td>
-                                        <td><strong>总数量：</strong>{{ subjectData.totalCount }}份</td>
-                                    </tr>
-                                    <tr>
-                                        <td v-if="subjectData.spareVolumeCount" class="cell-light-gray">
-                                            <strong>备用：</strong>{{ subjectData.spareVolumeCount }}份
-                                        </td>
-                                        <td v-else>&nbsp;</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>起止号：</strong>{{ subjectData.fullRange }}</td>
-                                        <td><strong>当前捆：</strong>第{{ subjectData.bundleNo }}捆</td>
-                                        <td><strong>总捆数：</strong>共{{ subjectData.totalBundles }}捆</td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="3" class="bundle-time-cell">
-                                            <strong>考试时间：</strong>{{ subjectData.examTime || '____' }}
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
+                    <!-- 独立整页：合并科目过多，不再区分上下联，整页都给捆扎内容 -->
+                    <div v-if="page.fullPage" class="bundle-label bundle-label-full">
+                        <bundle-subjects :side="page.full" :font-style="subjectFontStyle"></bundle-subjects>
                     </div>
+
+                    <template v-else>
+                        <!-- 上联 -->
+                        <div class="bundle-label bundle-label-top">
+                            <bundle-subjects v-if="page.top" :side="page.top" :font-style="subjectFontStyle"></bundle-subjects>
+                        </div>
+                        <div class="bundle-cut-line" aria-hidden="true"></div>
+
+                        <!-- 下联 -->
+                        <div class="bundle-label bundle-label-bottom">
+                            <bundle-subjects v-if="page.bottom" :side="page.bottom" :font-style="subjectFontStyle"></bundle-subjects>
+                        </div>
+                    </template>
                 </div>
 
                 <div class="page-break" v-if="pageIdx < bundlePages.length - 1"><!-- 分页符 --></div>

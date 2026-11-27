@@ -244,6 +244,11 @@ hr {
     overflow: hidden;
 }
 
+/* 独立捆扎页：合并科目过多时整页展示，不区分上下联、无需裁剪 */
+.bundle-page-full {
+    grid-template-rows: 100%;
+}
+
 .bundle-cut-line {
     width: 100%;
     border-top: 1px solid #cacaca;
@@ -296,10 +301,15 @@ hr {
 
 .bundle-table td {
     border: 1px solid #000;
-    padding: 4px;
+    padding: 2px;
+    line-height: 1.2;
     text-align: left;
     vertical-align: middle;
     word-break: break-word;
+    /* 覆盖 Bootstrap .table 给 td 设置的 --bs-table-bg 白底与 inset 阴影，
+       否则 border-collapse 下白底会盖住相邻单元格的共用边框 */
+    background-color: transparent;
+    box-shadow: none;
 }
 
 .bundle-table td strong {
@@ -320,6 +330,8 @@ hr {
     font-weight: bold;
 }
 
+/* 默认字号 45px(18px*1.25*2)，仅用于 5 字及以内的科目名；
+   6 字及以上由 app.js 的 subjectFontStyle() 按字数写入行内字号 */
 .bundle-subject-name {
     line-height: 1.2;
     font-size: 2em;

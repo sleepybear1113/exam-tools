@@ -1,8 +1,58 @@
 // noinspection JSUnresolvedReference
 const {createApp, ref, computed, watch} = Vue;
 
+// 单联标签内容（标题 + 一个或多个科目表格），上下联/独立整页共用
+const BundleSubjects = {
+    name: "BundleSubjects",
+    props: {
+        side: {type: Object, required: true},
+        fontStyle: {type: Function, required: true}
+    },
+    template: `
+        <div class="bundle-content">
+            <h2 class="text-center bundle-title">{{ side.label }} {{ side.bundle.venueName ? side.bundle.venueName : "" }}</h2>
+            <div v-for="(subjectData, subIdx) in side.bundle.subjects" :key="subIdx" class="bundle-subject-group">
+                <table class="table table-sm table-bordered bundle-table">
+                    <colgroup>
+                        <col class="bundle-col-subject">
+                        <col class="bundle-col-equal">
+                        <col class="bundle-col-equal">
+                    </colgroup>
+                    <tbody>
+                    <tr>
+                        <td class="bundle-subject-cell" :rowspan="subjectData.spareVolumeCount ? 2 : 1">
+                            <div class="bundle-subject-name" :style="fontStyle(subjectData.subject)">{{ subjectData.subject }}</div>
+                        </td>
+                        <td class="bundle-quantity-cell" :rowspan="subjectData.spareVolumeCount ? 2 : 1">
+                            <div class="bundle-quantity-value">数量：{{ subjectData.quantity }}</div>
+                        </td>
+                        <td><strong>总数量：</strong>{{ subjectData.totalCount }}份</td>
+                    </tr>
+                    <tr v-if="subjectData.spareVolumeCount">
+                        <td class="cell-light-gray"><strong>备用：</strong>{{ subjectData.spareVolumeCount }}份</td>
+                    </tr>
+                    <tr>
+                        <td><strong>起止号：</strong>{{ subjectData.fullRange }}</td>
+                        <td><strong>当前捆：</strong>第{{ subjectData.bundleNo }}捆</td>
+                        <td><strong>总捆数：</strong>共{{ subjectData.totalBundles }}捆</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="bundle-time-cell">
+                            <strong>考试时间：</strong>{{ subjectData.examTime || "____" }}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `
+};
+
 // noinspection JSUnusedGlobalSymbols
 const vm = createApp({
+    components: {
+        BundleSubjects
+    },
     setup() {
         const fileSelect = ref(null);
         const fileName = ref("");
@@ -12,6 +62,7 @@ const vm = createApp({
         const sortMode = ref("venue"); // "venue" or "session"
         const paperIntact = ref("0");
         const currentModule = ref("handover"); // "handover", "envelope", "bundle"
+        const bundleMode = ref("both"); // "both": 试卷+答卷捆, "paper": 仅试卷捆, "answer": 仅答卷捆
         const dragOver = ref(false);
 
         // 从localStorage加载边距设置
@@ -630,31 +681,43 @@ const vm = createApp({
             return bundles;
         };
 
+        // 半页标签最多容纳的合并科目数，超过后改为整页独立捆扎页
+        const BUNDLE_MAX_SUBJECTS_PER_SIDE = 4;
+
+        // 按考点分组，保持原有顺序
+        const groupBundlesByVenue = (bundles) => {
+            const grouped = new Map();
+            bundles.forEach(bundle => {
+                const key = bundle.venueName;
+                if (!grouped.has(key)) {
+                    grouped.set(key, {
+                        venueName: key,
+                        bundles: []
+                    });
+                }
+                grouped.get(key).bundles.push(bundle);
+            });
+            return grouped;
+        };
+
         // 生成捆扎标签页面数据
         const bundlePages = computed(() => {
-            const paperBundles = generateBundleData("paper");
-            const answerBundles = generateBundleData("answer");
+            // 单一类型时上下半页都放同类型标签；否则上半页试卷、下半页答卷
+            const isSingleType = bundleMode.value === "paper" || bundleMode.value === "answer";
+            const types = isSingleType ? [bundleMode.value] : ["paper", "answer"];
 
-            // 按考点分组，确保考点名称只出现一次
-            const processBundles = (bundles) => {
-                const grouped = new Map();
-                bundles.forEach(bundle => {
-                    const key = bundle.venueName;
-                    if (!grouped.has(key)) {
-                        grouped.set(key, {
-                            venueName: key,
-                            bundles: []
-                        });
-                    }
-                    grouped.get(key).bundles.push(bundle);
-                });
-                return Array.from(grouped.values());
-            };
+            const groupMaps = {};
+            types.forEach(type => {
+                groupMaps[type] = groupBundlesByVenue(generateBundleData(type));
+            });
 
-            const paperGroups = processBundles(paperBundles);
-            const answerGroups = processBundles(answerBundles);
+            const labelOf = (type) => (type === "paper" ? "试卷捆" : "答卷捆");
+            // 页面每联：label 为标题前缀，bundle 为该联的捆数据
+            const makeSide = (type, bundle) => ({
+                label: labelOf(type),
+                bundle: bundle
+            });
 
-            // 合并试卷和答卷，按考点匹配，保持排序顺序
             const pages = [];
             // 获取所有考点，按照 sortedData 的顺序
             const venueOrder = [];
@@ -666,19 +729,33 @@ const vm = createApp({
                 }
             });
             // 添加其他可能存在的考点（如果 sortedData 中没有）
-            [...paperGroups.map(g => g.venueName), ...answerGroups.map(g => g.venueName)].forEach(venue => {
-                if (!seenVenues.has(venue)) {
-                    venueOrder.push(venue);
-                    seenVenues.add(venue);
-                }
+            types.forEach(type => {
+                groupMaps[type].forEach((group, venue) => {
+                    if (!seenVenues.has(venue)) {
+                        venueOrder.push(venue);
+                        seenVenues.add(venue);
+                    }
+                });
             });
 
             venueOrder.forEach(venue => {
-                const paperGroup = paperGroups.find(g => g.venueName === venue);
-                const answerGroup = answerGroups.find(g => g.venueName === venue);
+                if (isSingleType) {
+                    // 仅试卷或仅答卷：该考点的捆两两成页，上半页、下半页都是同类型标签
+                    const type = types[0];
+                    const list = (groupMaps[type].get(venue) || {bundles: []}).bundles;
+                    for (let i = 0; i < list.length; i += 2) {
+                        pages.push({
+                            venueName: venue,
+                            top: makeSide(type, list[i]),
+                            bottom: list[i + 1] ? makeSide(type, list[i + 1]) : null
+                        });
+                    }
+                    return;
+                }
 
-                const paperBundlesList = paperGroup ? paperGroup.bundles : [];
-                const answerBundlesList = answerGroup ? answerGroup.bundles : [];
+                // 试卷+答卷：按序号一一配对，上半页试卷、下半页答卷
+                const paperBundlesList = (groupMaps.paper.get(venue) || {bundles: []}).bundles;
+                const answerBundlesList = (groupMaps.answer.get(venue) || {bundles: []}).bundles;
 
                 const maxLength = Math.max(paperBundlesList.length, answerBundlesList.length);
 
@@ -690,8 +767,8 @@ const vm = createApp({
                     if (paperBundle || answerBundle) {
                         pages.push({
                             venueName: venue,
-                            paperBundle: paperBundle,
-                            answerBundle: answerBundle
+                            top: paperBundle ? makeSide("paper", paperBundle) : null,
+                            bottom: answerBundle ? makeSide("answer", answerBundle) : null
                         });
                     }
                 }
@@ -699,8 +776,8 @@ const vm = createApp({
 
             if (sortMode.value === "session") {
                 pages.sort((a, b) => {
-                    const aBundle = a.paperBundle || a.answerBundle;
-                    const bBundle = b.paperBundle || b.answerBundle;
+                    const aBundle = (a.top || a.bottom).bundle;
+                    const bBundle = (b.top || b.bottom).bundle;
                     const aSubject = aBundle.subjects.length > 0 ? aBundle.subjects[0].subject : '';
                     const bSubject = bBundle.subjects.length > 0 ? bBundle.subjects[0].subject : '';
                     if (aBundle.session !== bBundle.session) {
@@ -716,8 +793,64 @@ const vm = createApp({
                 });
             }
 
-            return pages;
+            // 单联的合并科目数超过阈值时，不再区分上下联：每一联各占一整页
+            const finalPages = [];
+            pages.forEach(page => {
+                const isOverLimit = (side) => !!side && side.bundle.subjects.length > BUNDLE_MAX_SUBJECTS_PER_SIDE;
+                if (!isOverLimit(page.top) && !isOverLimit(page.bottom)) {
+                    finalPages.push(page);
+                    return;
+                }
+                [page.top, page.bottom].filter(Boolean).forEach(side => {
+                    finalPages.push({
+                        venueName: page.venueName,
+                        top: null,
+                        bottom: null,
+                        full: side,
+                        fullPage: true
+                    });
+                });
+            });
+
+            return finalPages;
         });
+
+        // 独立捆扎页（整页内容、无需上下联裁剪）的页码，从 1 开始
+        const bundleIndependentPages = computed(() => {
+            const pageNos = [];
+            bundlePages.value.forEach((page, idx) => {
+                if (page.fullPage) {
+                    pageNos.push(idx + 1);
+                }
+            });
+            return pageNos;
+        });
+
+        // 科目单元格可用宽度（px）：A4纵向 210mm - 页边距10mm*2 - 标签内边距5mm*2 = 180mm≈680px，
+        // 科目列占 44%≈299px，再减去单元格 padding/border ≈10px，留少量余量后取 280px
+        const SUBJECT_CELL_USABLE_WIDTH = 280;
+        // 超过该字数时不再继续缩小，改为“一行10个字”的字号并允许换行
+        const SUBJECT_MAX_SINGLE_LINE = 14;
+
+        // 科目名字号：≤5字保持默认(45px)；6-8字统一缩小且单行显示；
+        // 9-14字按可用宽度自适应以保证单行；>14字按“一行10字”的字号显示，超出部分换行
+        const subjectFontStyle = (subject) => {
+            const text = String(subject ?? '').trim();
+            const len = [...text].length;
+            if (len <= 5) {
+                return {}; // 沿用 .bundle-subject-name 的默认字号 2em(45px)
+            }
+            if (len <= 8) {
+                return {fontSize: '34px', whiteSpace: 'nowrap'};
+            }
+            if (len <= SUBJECT_MAX_SINGLE_LINE) {
+                return {
+                    fontSize: `${Math.floor(SUBJECT_CELL_USABLE_WIDTH / len)}px`,
+                    whiteSpace: 'nowrap'
+                };
+            }
+            return {fontSize: `${Math.floor(SUBJECT_CELL_USABLE_WIDTH / 10)}px`};
+        };
 
         // 切换模块
         const switchModule = (module) => {
@@ -761,6 +894,7 @@ const vm = createApp({
             sortMode,
             paperIntact,
             currentModule,
+            bundleMode,
             envelopeMarginLeft,
             envelopeMarginTop,
             messages,
@@ -771,7 +905,9 @@ const vm = createApp({
             switchModule,
             printCurrent,
             groupedData,
-            bundlePages
+            bundlePages,
+            bundleIndependentPages,
+            subjectFontStyle
         };
     }
 });
