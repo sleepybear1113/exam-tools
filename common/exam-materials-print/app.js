@@ -712,9 +712,10 @@ const vm = createApp({
             });
 
             const labelOf = (type) => (type === "paper" ? "试卷捆" : "答卷捆");
-            // 页面每联：label 为标题前缀，bundle 为该联的捆数据
+            // 页面每联：label 为标题前缀，bundle 为该联的捆数据，type 用于试卷/答卷排序
             const makeSide = (type, bundle) => ({
                 label: labelOf(type),
+                type: type,
                 bundle: bundle
             });
 
@@ -793,24 +794,63 @@ const vm = createApp({
                 });
             }
 
-            // 单联的合并科目数超过阈值时，不再区分上下联：每一联各占一整页
-            const finalPages = [];
+            // 展平成“联”序列（保持原顺序）：合并科目超阈值的联独占整页，
+            // 其余联继续两两拼成上下半页，避免落单的半页被推成独占整页
+            const sides = [];
             pages.forEach(page => {
-                const isOverLimit = (side) => !!side && side.bundle.subjects.length > BUNDLE_MAX_SUBJECTS_PER_SIDE;
-                if (!isOverLimit(page.top) && !isOverLimit(page.bottom)) {
-                    finalPages.push(page);
+                if (page.top) sides.push(page.top);
+                if (page.bottom) sides.push(page.bottom);
+            });
+
+            const isOverLimit = (side) => side.bundle.subjects.length > BUNDLE_MAX_SUBJECTS_PER_SIDE;
+            const finalPages = [];
+            let pending = null; // 等待与后续联拼成一页的落单半页
+
+            const flushPending = () => {
+                if (!pending) {
                     return;
                 }
-                [page.top, page.bottom].filter(Boolean).forEach(side => {
+                finalPages.push({
+                    venueName: pending.bundle.venueName,
+                    top: pending,
+                    bottom: null
+                });
+                pending = null;
+            };
+
+            sides.forEach(side => {
+                if (isOverLimit(side)) {
+                    // 超阈值：整页独立展示，不与半页拼页
+                    flushPending();
                     finalPages.push({
-                        venueName: page.venueName,
+                        venueName: side.bundle.venueName,
                         top: null,
                         bottom: null,
                         full: side,
                         fullPage: true
                     });
-                });
+                    return;
+                }
+
+                if (pending && pending.bundle.venueName === side.bundle.venueName) {
+                    // 同一考点：两张半页拼成一页，并保持“试卷在上、答卷在下”
+                    const paperFirst = pending.type === "answer" && side.type === "paper";
+                    const top = paperFirst ? side : pending;
+                    const bottom = paperFirst ? pending : side;
+                    finalPages.push({
+                        venueName: top.bundle.venueName,
+                        top: top,
+                        bottom: bottom
+                    });
+                    pending = null;
+                    return;
+                }
+
+                // 没有待配对的半页，或跨考点不拼页：先落下前一张半页
+                flushPending();
+                pending = side;
             });
+            flushPending();
 
             return finalPages;
         });
